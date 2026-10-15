@@ -2,10 +2,6 @@
 .DS_Store
 ._*
 
-# 本机历史备份和旧版预览（新版 island-preview-* 仍纳入版本管理）
-/backups/
-/preview-*.png
-
 # 临时文件与本地配置
 *.log
 *.tmp

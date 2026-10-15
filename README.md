@@ -76,12 +76,9 @@
 - `island-preview-desktop.png`
 - `island-preview-fullpage.png`
 
-## 素材与备份
+## 素材
 
 - 原创岛屿插画：`assets/island-hero.png` / `assets/island-hero.webp`，已内嵌 HTML。
 - 微信分享缩略图：`assets/island-share.jpg`。
 - 素材来源及最终生成提示词：`assets/README.md`。
 - 视觉规范：`DESIGN.md`。
-- 原有页面：`backups/index-before-island.html`，原素材说明：`backups/README-before-island.md`。
-
-旧版素材与旧截图仍保留，当前小岛页面不使用它们。

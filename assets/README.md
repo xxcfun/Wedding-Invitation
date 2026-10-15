@@ -15,4 +15,4 @@ Use case: stylized-concept. Asset type: hero illustration for an original mobile
 
 ## 使用说明
 
-页面基础素材已经内嵌；部署页面只需 `index.html`。微信抓取缩略图需要另外上传 `island-share.jpg` 并填写公网 HTTPS URL。音乐需自行准备，照片可在 `CONFIG.photos` 逐项替换。项目中原有的其他素材为旧版保留文件，当前页面未使用。
+页面基础素材已经内嵌；部署页面只需 `index.html`。微信抓取缩略图需要另外上传 `island-share.jpg` 并填写公网 HTTPS URL。音乐需自行准备，照片可在 `CONFIG.photos` 逐项替换。
