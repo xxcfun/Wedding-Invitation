@@ -5,6 +5,8 @@
 - `island-hero.png`：ImageGen 原始输出。
 - `island-hero.webp`：用于页面内嵌的 1024px WebP。
 - `island-share.jpg`：600×600 微信分享封面，使用同一岛屿插画和 HTML 绘制的木质标题牌。
+- `island-share-thumb.jpg`：300×300 轻量缩略图，供公开链接抓取预览。
+- `island-invitation.jpg`：720×1080 完整邀请图卡，带请柬二维码，可保存并转发。文字和版式由 HTML 绘制，二维码使用标准编码生成，不是 AI 绘制的装饰图案。
 - `island-font-OFL.txt`：ZCOOL KuaiLe 标题字体的 SIL OFL 许可；HTML 同时保留许可文本。
 
 ## 最终生成提示词
@@ -15,4 +17,4 @@ Use case: stylized-concept. Asset type: hero illustration for an original mobile
 
 ## 使用说明
 
-页面基础素材已经内嵌；部署页面只需 `index.html`。微信抓取缩略图需要另外上传 `island-share.jpg` 并填写公网 HTTPS URL。音乐需自行准备，照片可在 `CONFIG.photos` 逐项替换。
+页面基础素材和完整邀请图卡的离线版本已经内嵌。正式部署时，同时上传 `island-share-thumb.jpg` 作为公开缩略图，以及 `island-invitation.jpg` 用于微信长按保存。没有公众号签名服务时，分享采用图片邀请卡；公开缩略图及网页元信息不能替代微信原生分享卡片所需的授权。更换个性化信息或线上网址时，请同步更新图卡文字、二维码和 HTML 内嵌版本。音乐需自行准备，照片可在 `CONFIG.photos` 逐项替换。
