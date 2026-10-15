@@ -2684,7 +2684,7 @@
             >
               <svg class="icon mini" aria-hidden="true">
                 <use href="#i-compass" /></svg
-              >高德地图导航</a
+              >导航前往 · 高德优先</a
             >
           </div>
         </div>
@@ -2707,7 +2707,7 @@
           class="map-frame wood press reveal"
           data-navigate
           href="https://uri.amap.com/marker?position=118.457025,36.694075&amp;name=%E6%B5%B7%E5%B2%B1%E7%A6%A7%E5%90%88%E9%85%92%E5%BA%97&amp;coordinate=gaode&amp;callnative=1"
-          aria-label="使用高德地图导航至海岱禧合酒店"
+          aria-label="导航至海岱禧合酒店，优先高德，未唤起时尝试其他地图"
         >
           <img
             id="location-map"
@@ -2718,12 +2718,19 @@
           /><span class="map-caption"
             ><svg class="icon mini" aria-hidden="true">
               <use href="#i-pin" /></svg
-            >点击地图 · 高德导航赴约</span
+            >点击地图 · 开启导航</span
           >
         </a>
         <p class="location-address" data-bind="address">
           山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）
         </p>
+        <p class="location-note">优先高德，未唤起时尝试其他地图</p>
+        <a
+          class="text-btn press"
+          data-web-map
+          href="https://uri.amap.com/marker?position=118.457025,36.694075&amp;coordinate=gaode&amp;callnative=0"
+          >直接打开高德网页地图</a
+        >
         <p class="location-note">手绘位置示意，实际路线以导航为准</p>
         <svg class="cross-sprig" aria-hidden="true">
           <use href="#i-sprig" />
@@ -3344,11 +3351,14 @@
           btn.addEventListener("click", () => openPhoto(i));
           $("#photo-grid").append(btn);
         });
-        // 高德直达：移动端点击即调用对应 App 协议；桌面仍打开高德网页地图。
-        // 本示例坐标为 GCJ-02，dev=0，不再显示地图选择器，也不提供地址复制入口。
+        // 导航优先级：高德 App → 其他地图 App → 高德网页；电脑直接使用高德网页。
+        // H5 无法查询任意 App 是否安装，以下根据唤起后的页面生命周期决定是否继续兜底。
         const { longitude: lng, latitude: lat } = CONFIG;
         const name = encodeURIComponent(CONFIG.venue);
         const addr = encodeURIComponent(CONFIG.address);
+        const destination = encodeURIComponent(
+          `${CONFIG.venue} ${CONFIG.address}`,
+        );
         const isiOS =
           /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
           (navigator.maxTouchPoints > 1 &&
@@ -3356,6 +3366,20 @@
         const amapAppURL = `${isiOS ? "iosamap" : "androidamap"}://navi?sourceApplication=bujiWedding&poiname=${name}&lat=${lat}&lon=${lng}&dev=0&style=2`;
         const webMap = `https://uri.amap.com/marker?position=${lng},${lat}&name=${name}&content=${addr}&coordinate=gaode&callnative=0`;
         const webRoute = `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&policy=1&src=buji_wedding&coordinate=gaode&callnative=0`;
+        // 安卓通过通用 geo 协议交给系统默认地图；多款 App 可处理时由系统选择。
+        // 使用地址搜索而非将 GCJ-02 坐标强塞给所有 App，避免不同地图坐标系造成偏移。
+        const systemGeoURL = `geo:0,0?q=${destination}`;
+        // iOS 没有通用的已安装地图查询能力，依次尝试系统地图及常见地图。
+        // 百度明确声明 GCJ-02，腾讯使用同一 GCJ-02 坐标；系统地图按完整地址导航。
+        const otherIOSMaps = [
+          `maps://?daddr=${destination}&dirflg=d`,
+          `baidumap://map/direction?origin=${encodeURIComponent("我的位置")}&destination=latlng:${lat},${lng}|name:${name}&coord_type=gcj02&mode=driving&src=webapp.buji_wedding`,
+          `qqmap://map/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=bujiWedding`,
+        ];
+        const appCandidates = [
+          amapAppURL,
+          ...(isiOS ? otherIOSMaps : [systemGeoURL]),
+        ];
         let cancelNavigationFallback = () => {};
         $$("[data-navigate]").forEach((link) => {
           link.href = isMobile() ? amapAppURL : webMap;
@@ -3366,10 +3390,11 @@
           link.addEventListener("click", () => {
             if (!isMobile()) return;
             cancelNavigationFallback();
-            const startedAt = performance.now();
-            let timer;
-            // App 已打开、出现系统确认框或用户离开页面时取消兜底，避免回来后突然跳转。
+            let timer,
+              index = 1,
+              stopped = false;
             const cancel = () => {
+              stopped = true;
               clearTimeout(timer);
               document.removeEventListener("visibilitychange", onVisibility);
               window.removeEventListener("pagehide", cancel);
@@ -3378,21 +3403,49 @@
             const onVisibility = () => {
               if (document.hidden) cancel();
             };
+            const scheduleNext = () => {
+              const startedAt = performance.now();
+              timer = setTimeout(() => {
+                // 后台恢复、系统确认框造成的长时间暂停不触发后续 App 或网页跳转。
+                if (
+                  stopped ||
+                  document.hidden ||
+                  performance.now() - startedAt > 3500
+                ) {
+                  cancel();
+                  return;
+                }
+                if (index >= appCandidates.length) {
+                  cancel();
+                  window.location.assign(webRoute);
+                  return;
+                }
+                const nextURL = appCandidates[index++];
+                scheduleNext();
+                try {
+                  window.location.assign(nextURL);
+                } catch {
+                  /* 当前协议不支持时，继续下一层兜底。 */
+                }
+              }, 1500);
+            };
             cancelNavigationFallback = cancel;
             document.addEventListener("visibilitychange", onVisibility);
             window.addEventListener("pagehide", cancel, { once: true });
             window.addEventListener("blur", cancel, { once: true });
-            timer = setTimeout(() => {
-              cancel();
-              if (!document.hidden && performance.now() - startedAt < 3500) {
-                window.location.assign(webRoute);
-              }
-            }, 1800);
-            if (/MicroMessenger/i.test(navigator.userAgent)) {
-              toast("若未打开高德，请点右上角在浏览器中打开");
-            }
-            // 不阻止默认事件，保持真实链接点击的用户手势，交由手机唤起高德。
+            scheduleNext();
+            if (/MicroMessenger/i.test(navigator.userAgent))
+              toast("若地图未打开，可点下方网页地图，或从浏览器打开");
+            // 首次保持原生链接的真实点击手势，不额外弹出自制地图选择器。
           });
+        });
+        $$("[data-web-map]").forEach((link) => {
+          link.href = isMobile() ? webRoute : webMap;
+          if (!isMobile()) {
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+          }
+          link.addEventListener("click", () => cancelNavigationFallback());
         });
         let lastFocus = null,
           activeDialog = null;
