@@ -1892,14 +1892,107 @@
         animation: easter 1.15s ease-out forwards;
         white-space: nowrap;
       }
-      .collection-fly {
+      /* 收集反馈：大贴纸发现提示 → 飞入图鉴 → 图鉴回弹与 +N。均不拦截触摸和滚动。 */
+      .collect-notice {
         position: fixed;
         z-index: 60;
-        width: 36px;
-        height: 36px;
-        color: #d7ad7d;
+        left: 50%;
+        top: 46%;
+        width: min(264px, calc(100vw - 48px));
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 14px 17px;
+        border: 3px solid #fffef3;
+        border-radius: 25px;
+        background: #fff8e9f5;
+        box-shadow: 0 12px 35px #5c795633;
         pointer-events: none;
-        animation: collect 1s ease-in-out forwards;
+        transform: translate(-50%, -50%);
+        animation: sticker-discover 0.38s var(--spring) both;
+        transition:
+          opacity 0.18s,
+          translate 0.18s;
+      }
+      .collect-notice.leaving {
+        opacity: 0;
+        translate: 0 -8px;
+      }
+      .collect-emblem {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #e5edcf;
+        color: #6a8b54;
+        box-shadow:
+          inset 0 2px #fffceb,
+          0 4px 0 #cfd9ad;
+      }
+      .collect-emblem .icon {
+        width: 38px;
+        height: 38px;
+      }
+      .collect-kicker {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: #65735b;
+      }
+      .collect-name {
+        display: block;
+        font-family: var(--round);
+        font-size: 18px;
+        font-weight: 400;
+        color: #496b43;
+        margin-top: 3px;
+        line-height: 1.5;
+      }
+      .collection-fly {
+        position: fixed;
+        z-index: 61;
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border: 3px solid #fffef0;
+        border-radius: 50%;
+        background: #e8efce;
+        color: #6a8b54;
+        box-shadow: 0 6px 20px #637e4f30;
+        pointer-events: none;
+        animation: collect 0.75s ease-in-out forwards;
+      }
+      .collection-fly .icon {
+        width: 38px;
+        height: 38px;
+      }
+      .atlas-tool.collect-caught {
+        animation: atlas-catch 0.65s var(--spring);
+      }
+      .atlas-tool.collect-caught::before {
+        content: "";
+        position: absolute;
+        inset: -7px;
+        border: 2px solid #d7b977;
+        border-radius: 50%;
+        pointer-events: none;
+        animation: sticker-ring 0.7s ease-out forwards;
+      }
+      .collection-plus {
+        position: fixed;
+        z-index: 62;
+        padding: 2px 10px;
+        border: 2px solid #fff8dc;
+        border-radius: 16px;
+        color: #fffdf0;
+        background: #527b4e;
+        font-size: 14px;
+        font-weight: 700;
+        pointer-events: none;
+        animation: sticker-plus 0.9s ease-out forwards;
       }
       .atlas-grid {
         display: grid;
@@ -2210,18 +2303,75 @@
           transform: translate(-50%, -48px) scale(0.95);
         }
       }
+      @keyframes sticker-discover {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -35%) scale(0.72) rotate(-4deg);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1) rotate(0);
+        }
+      }
       @keyframes collect {
         0% {
-          opacity: 0;
-          transform: scale(0.5);
-        }
-        20% {
           opacity: 1;
-          transform: translateY(-35px) scale(1.3);
+          transform: translate(0, 0) scale(1);
+        }
+        35% {
+          opacity: 1;
+          transform: translate(
+              calc(var(--fly-x) * 0.3),
+              calc(var(--fly-y) * 0.15 - 28px)
+            )
+            scale(1.13) rotate(-10deg);
+        }
+        88% {
+          opacity: 1;
+          transform: translate(var(--fly-x), var(--fly-y)) scale(0.55);
         }
         100% {
           opacity: 0;
-          transform: translate(var(--fly-x), var(--fly-y)) scale(0.3);
+          transform: translate(var(--fly-x), var(--fly-y)) scale(0.25);
+        }
+      }
+      @keyframes atlas-catch {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        35% {
+          transform: scale(1.25) rotate(-8deg);
+        }
+        65% {
+          transform: scale(0.96) rotate(4deg);
+        }
+      }
+      @keyframes sticker-ring {
+        from {
+          opacity: 0.8;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 0;
+          transform: scale(1.65);
+        }
+      }
+      @keyframes sticker-plus {
+        0% {
+          opacity: 0;
+          transform: translateY(5px) scale(0.8);
+        }
+        25% {
+          opacity: 1;
+          transform: translateY(-8px) scale(1.08);
+        }
+        75% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-30px) scale(1);
         }
       }
       @media (hover: hover) {
@@ -2966,6 +3116,13 @@
       aria-live="polite"
       aria-atomic="true"
     ></div>
+    <div
+      id="collection-status"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
     <!-- 图片弹窗支持触摸、鼠标滚轮、键盘和可见按钮；背景磨砂，页面不写入 overflow:hidden。 -->
     <div
       class="lightbox"
@@ -3008,7 +3165,7 @@
     >
       <div class="lightbox-inner">
         <h2 id="atlas-title">小岛贴纸图鉴</h2>
-        <p class="atlas-intro">慢慢逛，每一站都有一份小礼物。</p>
+        <p class="atlas-intro">每次来岛都能重收，慢慢逛，每站都有小礼物。</p>
         <div class="atlas-grid" id="atlas-grid"></div>
         <p class="atlas-progress" id="atlas-progress"></p>
         <button
@@ -3861,12 +4018,36 @@
           ["mail", "祝福信封"],
           ["butterfly", "温暖蝴蝶"],
         ];
-        const savedStickers = storage.get("buji-stickers", []);
-        const collected = new Set(
-          (Array.isArray(savedStickers) ? savedStickers : []).filter(
-            (n) => Number.isInteger(n) && n >= 0 && n < stickerDefs.length,
-          ),
-        );
+        // 每次打开 / 刷新都开启新一轮图鉴；不使用 localStorage 或 sessionStorage 记忆进度。
+        const collected = new Set();
+        try {
+          localStorage.removeItem("buji-stickers");
+        } catch {
+          /* 浏览器禁用存储也可收集。 */
+        }
+        let stickerIO = null;
+        let pendingCollections = [],
+          collectionBusy = false,
+          collectionWakePending = false;
+        const collectionTimers = new Set();
+        function collectionLater(callback, ms) {
+          const timer = setTimeout(() => {
+            collectionTimers.delete(timer);
+            callback();
+          }, ms);
+          collectionTimers.add(timer);
+        }
+        function stopCollectionAnimation() {
+          collectionTimers.forEach(clearTimeout);
+          collectionTimers.clear();
+          pendingCollections = [];
+          collectionBusy = false;
+          collectionWakePending = false;
+          $$(".collect-notice,.collection-fly,.collection-plus").forEach((n) =>
+            n.remove(),
+          );
+          $("#atlas-btn").classList.remove("collect-caught");
+        }
         function updateAtlas() {
           const count = collected.size;
           $("#sticker-count").textContent = count;
@@ -3890,27 +4071,113 @@
           });
         }
         updateAtlas();
-        function collectSticker(i, target) {
+        function animateCollection() {
+          if (
+            collectionBusy ||
+            !pendingCollections.length ||
+            motionPaused() ||
+            document.hidden
+          )
+            return;
+          // 首次开场尚未结束时稍后展示，避免收集动画被欢迎加载层遮住。
+          if (!$("#loader").hidden) {
+            if (!collectionWakePending) {
+              collectionWakePending = true;
+              collectionLater(() => {
+                collectionWakePending = false;
+                animateCollection();
+              }, 250);
+            }
+            return;
+          }
+          collectionBusy = true;
+          // 快速滚动时合并待播放的反馈，避免十个提示层叠加或长时间排队。
+          const batch = pendingCollections.splice(0);
+          const [name, title] = stickerDefs[batch[0]];
+          const notice = el("div", "collect-notice");
+          notice.setAttribute("aria-hidden", "true");
+          const emblem = el("span", "collect-emblem");
+          emblem.append(icon(name));
+          const text = el("div");
+          text.append(
+            el("span", "collect-kicker", "发现一份小岛心意"),
+            el(
+              "strong",
+              "collect-name",
+              batch.length === 1 ? title : `新增 ${batch.length} 枚小岛贴纸`,
+            ),
+          );
+          notice.append(emblem, text);
+          document.body.append(notice);
+          collectionLater(() => {
+            const start = emblem.getBoundingClientRect();
+            const dest = $("#atlas-btn").getBoundingClientRect();
+            const fly = el("span", "collection-fly");
+            fly.setAttribute("aria-hidden", "true");
+            fly.append(icon(name));
+            fly.style.left = start.left + "px";
+            fly.style.top = start.top + "px";
+            fly.style.setProperty(
+              "--fly-x",
+              dest.left + dest.width / 2 - start.left - 28 + "px",
+            );
+            fly.style.setProperty(
+              "--fly-y",
+              dest.top + dest.height / 2 - start.top - 28 + "px",
+            );
+            document.body.append(fly);
+            notice.classList.add("leaving");
+            collectionLater(() => notice.remove(), 200);
+            collectionLater(() => {
+              fly.remove();
+              const atlas = $("#atlas-btn");
+              atlas.classList.remove("collect-caught");
+              void atlas.offsetWidth;
+              atlas.classList.add("collect-caught");
+              const box = atlas.getBoundingClientRect();
+              const plus = el("span", "collection-plus", "+" + batch.length);
+              plus.setAttribute("aria-hidden", "true");
+              plus.style.left = Math.max(8, box.left - 42) + "px";
+              plus.style.top = box.top - 7 + "px";
+              document.body.append(plus);
+              collectionLater(
+                () => atlas.classList.remove("collect-caught"),
+                750,
+              );
+              collectionLater(() => plus.remove(), 950);
+              collectionBusy = false;
+              animateCollection();
+            }, 750);
+          }, 800);
+        }
+        function collectSticker(i) {
           if (collected.has(i)) return;
           collected.add(i);
-          storage.set("buji-stickers", [...collected]);
           updateAtlas();
-          if (motionPaused()) return;
-          const rect = target.getBoundingClientRect(),
-            dest = $("#atlas-btn").getBoundingClientRect(),
-            fly = icon(stickerDefs[i][0], "collection-fly icon");
-          const x = Math.min(
-              innerWidth - 44,
-              Math.max(20, rect.left + rect.width / 2),
-            ),
-            y = Math.max(20, Math.min(innerHeight - 70, rect.top));
-          fly.style.left = x + "px";
-          fly.style.top = y + "px";
-          fly.style.setProperty("--fly-x", dest.left - x + "px");
-          fly.style.setProperty("--fly-y", dest.top - y + "px");
-          document.body.append(fly);
-          setTimeout(() => fly.remove(), 1100);
+          $("#collection-status").textContent =
+            `收集到${stickerDefs[i][1]}，本次已收藏 ${collected.size} / ${stickerDefs.length} 枚贴纸`;
+          if (motionPaused() || document.hidden) return;
+          pendingCollections.push(i);
+          animateCollection();
         }
+        function resetStickerCollection() {
+          stopCollectionAnimation();
+          collected.clear();
+          updateAtlas();
+          $("#collection-status").textContent =
+            "新一轮小岛图鉴已开启，慢慢逛，重新收集十枚贴纸吧。";
+          if (stickerIO) {
+            stickerIO.disconnect();
+            $$("[data-collect]").forEach((n) => stickerIO.observe(n));
+          }
+        }
+        // 浏览器后退缓存恢复时也重开一轮，不改变页面原生滚动位置。
+        window.addEventListener("pageshow", (event) => {
+          if (event.persisted) resetStickerCollection();
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) stopCollectionAnimation();
+        });
         $("#atlas-btn").onclick = () => {
           updateAtlas();
           openLayer($("#atlas-dialog"), "#atlas-close");
@@ -3932,11 +4199,11 @@
             { threshold: 0.08, rootMargin: "0px 0px -10px 0px" },
           );
           $$(".reveal").forEach((n) => revealIO.observe(n));
-          const stickerIO = new IntersectionObserver(
+          stickerIO = new IntersectionObserver(
             (entries) =>
               entries.forEach((e) => {
                 if (e.isIntersecting) {
-                  collectSticker(Number(e.target.dataset.collect), e.target);
+                  collectSticker(Number(e.target.dataset.collect));
                   stickerIO.unobserve(e.target);
                 }
               }),
@@ -3988,6 +4255,7 @@
         }
         const syncMotion = () => {
           document.body.classList.toggle("no-motion", motionPaused());
+          if (motionPaused()) stopCollectionAnimation();
           $("#ambient-toggle").setAttribute(
             "aria-pressed",
             String(manualPause),
