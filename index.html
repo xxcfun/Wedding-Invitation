@@ -882,6 +882,24 @@
       .letter p + p {
         margin-top: 11px;
       }
+      /* 长篇播报左对齐，保留手机端舒适行距与自然滚动。 */
+      .island-broadcast {
+        text-align: left;
+      }
+      .island-broadcast .icon {
+        display: inline-block;
+        vertical-align: middle;
+        color: #aa8547;
+      }
+      .broadcast-details {
+        margin: 20px 0;
+        padding: 16px;
+        border-radius: 20px;
+        background: #e9eddc99;
+      }
+      .broadcast-details strong {
+        color: #53744c;
+      }
       .letter-sign {
         font-family: var(--round);
         font-size: 15px;
@@ -2743,16 +2761,46 @@
             <svg class="icon"><use href="#i-leaf" /></svg>
           </div>
           <div class="eyebrow">请查收这份幸福</div>
-          <h2 class="letter-greeting">亲爱的你：</h2>
-          <p>
-            在这座小岛上，风很轻，花正好。<br />我们决定把余生的故事，<br />写进同一张请柬里。
-          </p>
-          <p>想把这一天的海风、花香与欢喜，<br />都留一个位置给你。</p>
-          <div class="letter-sign">
-            <svg class="icon mini" aria-hidden="true">
-              <use href="#i-heart" /></svg
-            >我们的婚礼，等你上岛
+          <!-- 可修改：岛内播报文案；姓名、婚期和地点自动读取 CONFIG，今日日期按北京时间更新。 -->
+          <h2 class="letter-greeting">布吉岛播报时间</h2>
+          <div class="island-broadcast">
+            <p>
+              大家好！这里是布吉岛播报时间。<br />今天是<span
+                id="broadcast-today"
+              ></span
+              >。
+            </p>
+            <p>
+              接下来播报重要岛内通知
+              <svg class="icon mini" aria-hidden="true">
+                <use href="#i-star" />
+              </svg>
+            </p>
+            <p>
+              居民<span data-bind="groom"></span>与居民<span
+                data-bind="bride"
+              ></span
+              >，经过长久相伴，决定缔结永久伙伴契约，举办婚礼庆典！在此诚挚邀请各位好朋友，前来小岛参加本次仪式，一同见证这份美好的时刻。
+            </p>
+            <div class="broadcast-details">
+              <p>
+                <strong>仪式时间</strong><br /><span
+                  id="broadcast-wedding-date"
+                ></span
+                ><br /><span data-bind="timeLabel"></span>
+              </p>
+              <p>
+                <strong>仪式地点</strong><br /><span data-bind="venue"></span
+                ><br /><span data-bind="address"></span>
+              </p>
+            </div>
+            <p>
+              <strong>今日小贴士</strong
+              ><br />到场不用盛装打扮，带上好心情与笑容就可以。现场备好了点心、饮品，欢迎大家自在欢聚。
+            </p>
+            <p>今天的播报到此结束。</p>
           </div>
+          <div class="letter-sign">那么，祝大家度过闪闪发光的一天！</div>
           <svg class="decoration flower-deco" aria-hidden="true">
             <use href="#i-flower" />
           </svg>
@@ -3398,6 +3446,20 @@
             }).formatToParts(weddingDate)
           : [];
         const part = (t) => parts.find((p) => p.type === t)?.value || "";
+        const todayParts = new Intl.DateTimeFormat("zh-CN", {
+          timeZone: "Asia/Shanghai",
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          weekday: "long",
+        }).formatToParts(new Date());
+        const todayPart = (type) =>
+          todayParts.find((p) => p.type === type)?.value || "";
+        $("#broadcast-today").textContent =
+          `${todayPart("year")}年${todayPart("month")}月${todayPart("day")}日，${todayPart("weekday")}`;
+        $("#broadcast-wedding-date").textContent = validDate
+          ? `${part("year")}年${Number(part("month"))}月${Number(part("day"))}日，${part("weekday")}`
+          : "婚期敬请期待";
         const shortDate = validDate
           ? `${part("year")}.${part("month")}.${part("day")}`
           : "婚期敬请期待";
