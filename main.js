@@ -16,23 +16,24 @@ const CONFIG = {
   longitude: 118.457025,
   latitude: 36.694075, // 可修改：经纬度；本示例按 GCJ-02 处理，高德/苹果使用该值，百度转换 BD-09
   audio: "", // 可修改：填入自行准备的、合法授权的治愈海岛纯音乐，如 assets/island-bgm.mp3；为空时给出友好提示
+  // 可修改：旅行城市、短句与图标；前三站不虚构旅行日期。
   story: [
     {
-      title: "初见",
-      date: "2021.09",
-      note: "人海里，刚好遇见你",
+      title: "青岛",
+      date: "一起看过海",
+      note: "海风作伴，身边是你",
       icon: "leaf",
     },
     {
-      title: "心动",
-      date: "2022.03",
-      note: "从你好，到想念",
+      title: "贵州",
+      date: "那远山呼唤我",
+      note: "和你赴约，山野之间",
       icon: "heart",
     },
     {
-      title: "告白",
-      date: "2022.05",
-      note: "喜欢终于有了回音",
+      title: "天津",
+      date: "一起慢慢走",
+      note: "大街小巷，都有我们的脚印",
       icon: "mail",
     },
     {
