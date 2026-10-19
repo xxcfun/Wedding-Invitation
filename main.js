@@ -16,33 +16,38 @@ const CONFIG = {
   longitude: 118.457025,
   latitude: 36.694075, // 可修改：经纬度；本示例按 GCJ-02 处理，高德/苹果使用该值，百度转换 BD-09
   audio: "", // 可修改：填入自行准备的、合法授权的治愈海岛纯音乐，如 assets/island-bgm.mp3；为空时给出友好提示
-  // 可修改：旅行城市、短句与图标；前三站不虚构旅行日期。
+  // 可修改：旅行节点标题、短句与图标；本区域不展示日期。
   story: [
     {
       title: "青岛",
-      date: "一起看过海",
+      subtitle: "一起看过海",
       note: "海风作伴，身边是你",
-      icon: "leaf",
+      icon: "waves",
     },
     {
       title: "贵州",
-      date: "那远山呼唤我",
+      subtitle: "那远山呼唤我",
       note: "和你赴约，山野之间",
-      icon: "heart",
+      icon: "mountains",
     },
     {
       title: "天津",
-      date: "一起慢慢走",
+      subtitle: "一起慢慢走",
       note: "大街小巷，都有我们的脚印",
-      icon: "mail",
+      icon: "footsteps",
     },
     {
-      title: "约定",
-      date: "2026.08",
-      note: "把未来，交给彼此",
-      icon: "rings",
+      title: "一起安家",
+      subtitle: "把未来交给彼此",
+      note: "往后的风景，都有你",
+      icon: "home",
     },
-    { title: "婚礼", date: "", note: "小岛故事，双人续写", icon: "flag" }, // 最后一个日期自动读取婚期
+    {
+      title: "幸福靠岸",
+      subtitle: "我们的婚礼",
+      note: "小岛故事，从此双人续写",
+      icon: "wedding-arch",
+    },
   ],
   agenda: [
     {
@@ -202,7 +207,7 @@ const CONFIG = {
     stop.append(
       mark,
       el("h3", "stop-title", s.title),
-      el("p", "stop-date", i === CONFIG.story.length - 1 ? shortDate : s.date),
+      el("p", "stop-subtitle", s.subtitle),
       el("p", "stop-note", s.note),
     );
     storyMap.append(stop);
