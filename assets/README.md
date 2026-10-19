@@ -18,3 +18,5 @@ Use case: stylized-concept. Asset type: hero illustration for an original mobile
 ## 使用说明
 
 页面基础素材和完整邀请图卡的离线版本已经内嵌。正式部署时，同时上传 `island-share-thumb.jpg` 作为公开缩略图，以及 `island-invitation.jpg` 用于微信长按保存。没有公众号签名服务时，分享采用图片邀请卡；公开缩略图及网页元信息不能替代微信原生分享卡片所需的授权。更换个性化信息或线上网址时，请同步更新图卡文字、二维码和 HTML 内嵌版本。音乐需自行准备，照片可在 `CONFIG.photos` 逐项替换。
+
+- `island-round.ttf`：ZCOOL KuaiLe 完整字库，来自 Google Fonts 官方仓库，替代原有内嵌子集；许可见 `island-font-OFL.txt`。
