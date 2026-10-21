@@ -175,7 +175,7 @@
   --wood: #d4a36e;
   --wood-dark: #795337;
   --peach: #efaa92;
-  --sky: #d9eef1;
+  --sky: #dceff7;
   --soft-shadow: 0 12px 34px #5d77551c, 0 3px 8px #5d775510;
   --spring: cubic-bezier(0.22, 1.3, 0.45, 1);
   --round:
@@ -324,15 +324,14 @@ body::before {
   overflow: clip;
   background: linear-gradient(
     180deg,
-    #d9eef1 0%,
-    #e5f1e8 12%,
-    #edf2d8 19%,
-    #e4efdf 28%,
-    #f0efd9 41%,
-    #f8efd9 53%,
-    #f8e9d5 66%,
-    #f4dfce 80%,
-    #f8ead8 91%,
+    #dceff7 0%,
+    #e1f0ed 10%,
+    #e8efde 24%,
+    #eeeedc 38%,
+    #f5eddc 52%,
+    #f6e7d7 67%,
+    #f7e5d7 80%,
+    #faeedf 92%,
     #fffbef 100%
   );
   box-shadow: 0 0 70px #52715e0d;
@@ -641,28 +640,49 @@ body::before {
 }
 .hero-art {
   position: relative;
-  margin-top: -18px;
+  margin-top: 12px;
   width: 100%;
-  aspect-ratio: 1/1.02;
+  aspect-ratio: 1 / 1;
   z-index: 1;
 }
 .hero-art img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  mask-image: linear-gradient(transparent, #000 9%, #000 88%, transparent 100%);
+  /* 多段透明度让天空、草坪柔和融入长卷，主体区域保持清晰。 */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #00000014 2%,
+    #00000066 6%,
+    #000000cc 12%,
+    #000 20%,
+    #000 80%,
+    #000000cc 89%,
+    #00000066 95%,
+    #00000014 99%,
+    transparent 100%
+  );
 }
 .hero-art::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(#dff0ed00 72%, #e5f1e845);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    #dceff738 0%,
+    transparent 24%,
+    transparent 76%,
+    #e1f0ed20 90%,
+    #e1f0ed40 100%
+  );
 }
 .pennants {
   translate: 0 var(--mid-parallax, 0px);
   position: absolute;
   left: 0;
-  top: 88px;
+  top: 0;
   width: 100%;
   height: 60px;
   pointer-events: none;
@@ -675,7 +695,7 @@ body::before {
   position: relative;
   z-index: 4;
   width: 75%;
-  margin: -40px auto 0;
+  margin: 0 auto;
   padding: 16px 12px 13px;
   transform: rotate(-2deg);
 }
@@ -2093,7 +2113,7 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(#d9eef1, #eaf4e7);
+  background: linear-gradient(#dceff7, #e1f0ed);
   z-index: 100;
   transition: opacity 0.7s;
   pointer-events: none;

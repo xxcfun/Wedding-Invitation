@@ -15,7 +15,7 @@ const CONFIG = {
   address: "山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）", // 可修改：完整地址
   longitude: 118.457025,
   latitude: 36.694075, // 可修改：经纬度；本示例按 GCJ-02 处理，高德/苹果使用该值，百度转换 BD-09
-  audio: "", // 可修改：填入自行准备的、合法授权的治愈海岛纯音乐，如 assets/island-bgm.mp3；为空时给出友好提示
+  audio: "assets/island-bgm.mp3", // 背景音乐：Nintendo Sound Team - Welcome Horizons；点击音乐按钮播放
   // 可修改：旅行节点标题、短句与图标；本区域不展示日期。
   story: [
     {
@@ -170,9 +170,12 @@ const CONFIG = {
     todayParts.find((p) => p.type === type)?.value || "";
   $("#broadcast-today").textContent =
     `${todayPart("year")}年${todayPart("month")}月${todayPart("day")}日，${todayPart("weekday")}`;
-  $("#broadcast-wedding-date").textContent = validDate
-    ? `${part("year")}年${Number(part("month"))}月${Number(part("day"))}日，${part("weekday")}`
-    : "婚期敬请期待";
+  const broadcastWeddingDate = $("#broadcast-wedding-date");
+  if (broadcastWeddingDate) {
+    broadcastWeddingDate.textContent = validDate
+      ? `${part("year")}年${Number(part("month"))}月${Number(part("day"))}日，${part("weekday")}`
+      : "婚期敬请期待";
+  }
   const shortDate = validDate
     ? `${part("year")}.${part("month")}.${part("day")}`
     : "婚期敬请期待";
@@ -448,13 +451,35 @@ const CONFIG = {
     }
     volumeFrame = requestAnimationFrame(frame);
   }
-  musicBtn.addEventListener("click", async () => {
+  let autoMusicPending = false;
+  let invitationMusicHandled = false;
+  function clearAutoMusic() {
+    autoMusicPending = false;
+    document.removeEventListener("click", retryAutoMusic);
+    document.removeEventListener("touchend", retryAutoMusic);
+    document.removeEventListener("keydown", retryAutoMusic);
+    document.removeEventListener("WeixinJSBridgeReady", retryAutoMusic);
+  }
+  function retryAutoMusic(event) {
+    if (!autoMusicPending || musicBtn.contains(event.target)) return;
+    if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+    clearAutoMusic();
+    setMusic(true, true);
+  }
+  function waitForMusicGesture() {
+    autoMusicPending = true;
+    document.addEventListener("click", retryAutoMusic);
+    document.addEventListener("touchend", retryAutoMusic);
+    document.addEventListener("keydown", retryAutoMusic);
+    document.addEventListener("WeixinJSBridgeReady", retryAutoMusic);
+  }
+  async function setMusic(on, automatic = false) {
     if (!CONFIG.audio) {
-      toast("海岛音乐还在路上，请先配置音频文件");
+      if (!automatic) toast("海岛音乐还在路上，请先配置音频文件");
       return;
     }
     const version = ++musicVersion;
-    musicWanted = !musicWanted;
+    musicWanted = on;
     if (musicWanted) {
       musicBtn.setAttribute("aria-busy", "true");
       cancelAnimationFrame(volumeFrame);
@@ -463,16 +488,21 @@ const CONFIG = {
       try {
         await audio.play();
         if (version !== musicVersion) return;
+        clearAutoMusic();
         musicUI(true);
         fadeVolume(0.48, 1000);
-        toast("海风有了旋律");
-      } catch {
+        if (!automatic) toast("海风有了旋律");
+      } catch (error) {
         if (version !== musicVersion) return;
         musicWanted = false;
         musicUI(false);
-        toast("音乐暂时无法播放，请检查音频地址后重试");
+        if (automatic && error.name === "NotAllowedError") {
+          waitForMusicGesture();
+        } else if (!automatic) {
+          toast("音乐暂时无法播放，请检查音频地址后重试");
+        }
       } finally {
-        musicBtn.removeAttribute("aria-busy");
+        if (version === musicVersion) musicBtn.removeAttribute("aria-busy");
       }
     } else {
       musicBtn.removeAttribute("aria-busy");
@@ -484,8 +514,26 @@ const CONFIG = {
         }
       });
     }
+  }
+  musicBtn.addEventListener("click", () => {
+    invitationMusicHandled = true;
+    clearAutoMusic();
+    setMusic(!musicWanted);
   });
+  // 在跳转正文的点击手势中直接播放，避免定时播放被浏览器拦截。
+  if (CONFIG.audio) {
+    audio.preload = "auto";
+    $$('a[href="#invitation"]').forEach((link) => {
+      link.addEventListener("click", () => {
+        if (invitationMusicHandled) return;
+        invitationMusicHandled = true;
+        clearAutoMusic();
+        if (!musicWanted) setMusic(true, true);
+      });
+    });
+  }
   audio.addEventListener("error", () => {
+    clearAutoMusic();
     ++musicVersion;
     musicWanted = false;
     cancelAnimationFrame(volumeFrame);
