@@ -90,11 +90,11 @@ const CONFIG = {
     },
   ],
   share: {
-    title: "布吉岛来信",
-    description: "诚邀您来小岛见证我们的幸福｜青州海岱禧合酒店",
-    image: "https://wedding.xxcfun.cn/assets/island-share-thumb.jpg", // 可修改：公开 HTTPS 缩略图，300px 轻量图片，供链接预览抓取
+    title: "刁勇辰与李汝静 · 布吉岛来信",
+    description: "2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
+    image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；同步用于 OG 与微信配置
     link: "https://wedding.xxcfun.cn", // 可修改：线上请柬网址，邀请卡二维码指向该地址
-    poster: "assets/island-invitation.jpg", // 可修改：可保存转发的完整邀请图卡，更新姓名、日期、网址后需同步更新此图片
+    poster: "assets/island-invitation-hd.jpg", // 当前高清封面制作的 1080×1620 邀请图卡；修改资料后运行 scripts/build-share-assets.cjs 重建
   },
   wechat: {
     signatureEndpoint: "", // 可修改：服务端微信 JS-SDK 签名接口，例如 /api/wechat-signature；接收 ?url=当前完整无hash URL，返回 appId,timestamp,nonceStr,signature。严禁在 HTML 内存放 appSecret。

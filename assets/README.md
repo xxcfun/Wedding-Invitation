@@ -6,9 +6,9 @@
 
 - `island-hero.png`：ImageGen 原始输出。
 - `island-hero.webp`：用于页面内嵌的 1024px WebP。
-- `island-share.jpg`：600×600 微信分享封面，使用同一岛屿插画和 HTML 绘制的木质标题牌。
-- `island-share-thumb.jpg`：300×300 轻量缩略图，供公开链接抓取预览。
-- `island-invitation.jpg`：720×1080 完整邀请图卡，带请柬二维码，可保存并转发。文字和版式由 HTML 绘制，二维码使用标准编码生成，不是 AI 绘制的装饰图案。
+- `island-share-hd.jpg`：1200×1200 当前 OG / 微信分享图，以 `island-cover-hd.png` 为底图，叠加新人姓名、婚期和木质标题牌；文字由 HTML 绘制。
+- `island-invitation-hd.jpg`：1080×1620 当前邀请图卡，沿用现有版式，使用当前高清封面、姓名、婚期、酒店及真实请柬二维码，支持保存与转发。
+- `island-share.jpg`、`island-share-thumb.jpg`、`island-invitation.jpg`：旧版无人岛分享素材，仅保留历史文件，当前页面不再引用。
 - `island-font-OFL.txt`：ZCOOL KuaiLe 标题字体的 SIL OFL 许可；HTML 同时保留许可文本。
 
 ## 最终生成提示词
@@ -19,7 +19,7 @@ Use case: stylized-concept. Asset type: hero illustration for an original mobile
 
 ## 使用说明
 
-页面基础素材和完整邀请图卡的离线版本已经内嵌。正式部署时，同时上传 `island-share-thumb.jpg` 作为公开缩略图，以及 `island-invitation.jpg` 用于微信长按保存。没有公众号签名服务时，分享采用图片邀请卡；公开缩略图及网页元信息不能替代微信原生分享卡片所需的授权。更换个性化信息或线上网址时，请同步更新图卡文字、二维码和 HTML 内嵌版本。音乐需自行准备，照片可在 `CONFIG.photos` 逐项替换。
+当前邀请图卡的离线版本已经内嵌。正式部署时，同时上传 `island-share-hd.jpg` 作为公开分享图片，以及 `island-invitation-hd.jpg` 用于微信长按保存。两张图片均复用现有高清素材，没有重新生成角色或场景。运行 `scripts/build-share-assets.cjs` 可从当前配置重建图片、静态 OG 和内嵌邀请卡；二维码使用 macOS Core Image 标准编码，并通过 Vision 解码验证。没有公众号签名服务时，分享采用图片邀请卡。照片可在 `CONFIG.photos` 逐项替换。
 
 - `island-round.ttf`：ZCOOL KuaiLe 完整字库，来自 Google Fonts 官方仓库，替代原有内嵌子集；许可见 `island-font-OFL.txt`。
 

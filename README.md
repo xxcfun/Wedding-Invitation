@@ -47,12 +47,12 @@
 
 当前默认使用**图片邀请卡分享**，无需公众号。点击右下角分享按钮，在微信中长按图卡保存，再发送给朋友或发布朋友圈；其他浏览器提供“保存邀请卡”下载入口。图卡上的二维码可打开完整请柬。此方式发送的是图片，不会把普通网址伪装成已完成认证的微信原生图文链接卡片。
 
-- `assets/island-invitation.jpg`：可转发的完整邀请图卡，HTML 同时内嵌离线兜底版本。
-- `assets/island-share-thumb.jpg`：300×300 的轻量链接预览缩略图。
+- `assets/island-invitation-hd.jpg`：1080×1620 完整邀请图卡，HTML 同时内嵌同一文件的离线兜底版本。
+- `assets/island-share-hd.jpg`：1200×1200 高清分享图，使用当前新人挥手封面，供 OG 与微信分享配置使用。
 - `CONFIG.share.poster`：微信长按使用的同源图片地址。
 - `CONFIG.share.image`、`link` 及 HTML 的 `og:image`、`og:url`、`canonical`：公开的 HTTPS 预览资源与请柬网址。
 
-更换姓名、婚期或线上网址时，需同步重新制作图卡及其中的二维码，并替换 HTML 内 `share-poster` 图片的内嵌数据。公开发布时应同时上传新增图卡和缩略图；部署必须同时包含 CSS 和 JS 文件；内嵌图片兜底不等同于可抓取的公开缩略图。
+更换姓名、婚期或线上网址时，在可解析 `playwright` 和 `sharp` 的 Node.js 环境运行 `node scripts/build-share-assets.cjs`。脚本使用本机 Chrome、macOS Swift/Core Image 与 Vision，读取当前 `CONFIG` 和 `assets/island-cover-hd.png`，重新导出两张图片、验证二维码，并同步静态 OG 与 HTML 内嵌邀请卡；可通过 `CHROME_PATH` 指定 Chrome 路径。发布时需同时上传新图、HTML、CSS 和 JS。新素材使用 `-hd` 文件名，避免沿用旧图片地址的缓存。
 
 ### 可选：微信公众号原生图文链接卡片
 
@@ -101,9 +101,8 @@
 
 - 当前首屏：`assets/island-cover-hd.webp`（1254×1254、WebP quality 96）；无损原图为 `assets/island-cover-hd.png`。单张完整场景由 `hero-motion.js` 做局部连续形变，不再使用每帧仅 443px 的八帧图。
 - 首屏动效与素材生成说明：`assets/hero-motion-notes.md`。
-- 原创岛屿插画：`assets/island-hero.png` / `assets/island-hero.webp`，已内嵌 HTML。
-- 微信分享缩略图：`assets/island-share.jpg`。
-- 链接预览轻量缩略图：`assets/island-share-thumb.jpg`。
-- 可转发的完整邀请图卡：`assets/island-invitation.jpg`。
+- 高清 OG / 微信分享图：`assets/island-share-hd.jpg`。
+- 可转发的高清邀请图卡：`assets/island-invitation-hd.jpg`，同一文件已内嵌为离线兜底。
+- 旧无人岛插画、旧分享图与旧邀请卡保留为历史素材，当前分享功能不再引用。
 - 素材来源及最终生成提示词：`assets/README.md`。
 - 视觉规范：`DESIGN.md`。
