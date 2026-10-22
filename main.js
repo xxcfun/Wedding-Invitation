@@ -1057,20 +1057,32 @@ const CONFIG = {
     $("#particles").append(n);
   }
   const heroScene = $("#hero-scene");
+  // 抬手后左右挥动；滚动只选择完整帧，反向滚动自然倒放。
+  const heroFrameSequence = [0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7];
+  let heroFramesReady = false;
+  let heroFrame = -1;
   function updateHeroWave() {
     if (!heroScene) return;
     const progress = motionPaused() ? 0 : Math.max(0, Math.min(1,
       scrollY / Math.min(innerHeight * 0.55, 420)));
-    const lift = 1 - Math.pow(1 - Math.min(1, progress / 0.55), 3);
-    const wave = Math.sin(Math.max(0, progress - 0.35) * Math.PI * 6);
-    heroScene.style.setProperty("--wave-blend", Math.min(1, progress * 12));
-    heroScene.style.setProperty("--groom-wave", `${-110 * lift + wave * 9 * lift}deg`);
-    heroScene.style.setProperty("--bride-wave", `${6 * lift + wave * 6 * lift}deg`);
+    const active = heroFramesReady && !motionPaused();
+    heroScene.classList.toggle("hero-wave-active", active);
+    if (!active) return;
+    const frame = heroFrameSequence[Math.min(heroFrameSequence.length - 1,
+      Math.floor(progress * heroFrameSequence.length))];
+    if (frame === heroFrame) return;
+    heroFrame = frame;
+    heroScene.style.setProperty("--frame-x", `${(frame % 4) * 100 / 3}%`);
+    heroScene.style.setProperty("--frame-y", `${Math.floor(frame / 4) * 100}%`);
   }
-  // 分层素材完整加载后才启用；加载失败时保留原封面。
-  Promise.all([...document.querySelectorAll(".hero-rig img")].map((img) => img.decode()))
-    .then(() => { heroScene.classList.add("hero-wave-ready"); updateHeroWave(); })
-    .catch(() => {});
+  // 整张帧图解码成功后才切换，失败时继续展示原封面。
+  const heroFrameImage = new Image();
+  heroFrameImage.src = "assets/hero-wave-frames.webp";
+  heroFrameImage.decode().then(() => {
+    heroFramesReady = true;
+    heroScene.classList.add("hero-wave-ready");
+    updateHeroWave();
+  }).catch(() => {});
   window.addEventListener("resize", updateHeroWave, { passive: true });
   const syncMotion = () => {
     document.body.classList.toggle("no-motion", motionPaused());
