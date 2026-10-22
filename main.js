@@ -299,98 +299,28 @@ const CONFIG = {
     btn.addEventListener("click", () => openPhoto(i));
     $("#photo-grid").append(btn);
   });
-  // 导航优先级：高德 App → 其他地图 App → 高德网页；电脑直接使用高德网页。
-  // H5 无法查询任意 App 是否安装，以下根据唤起后的页面生命周期决定是否继续兜底。
+  // 通过高德官方 App Scheme 直接导航；保留原生点击手势，不跳转网页或其他地图。
   const { longitude: lng, latitude: lat } = CONFIG;
   const name = encodeURIComponent(CONFIG.venue);
-  const addr = encodeURIComponent(CONFIG.address);
-  const destination = encodeURIComponent(`${CONFIG.venue} ${CONFIG.address}`);
   const isiOS =
     /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
   const amapAppURL = `${isiOS ? "iosamap" : "androidamap"}://navi?sourceApplication=bujiWedding&poiname=${name}&lat=${lat}&lon=${lng}&dev=0&style=2`;
-  const webMap = `https://uri.amap.com/marker?position=${lng},${lat}&name=${name}&content=${addr}&coordinate=gaode&callnative=0`;
-  const webRoute = `https://uri.amap.com/navigation?to=${lng},${lat},${name}&mode=car&policy=1&src=buji_wedding&coordinate=gaode&callnative=0`;
-  // 安卓通过通用 geo 协议交给系统默认地图；多款 App 可处理时由系统选择。
-  // 使用地址搜索而非将 GCJ-02 坐标强塞给所有 App，避免不同地图坐标系造成偏移。
-  const systemGeoURL = `geo:0,0?q=${destination}`;
-  // iOS 没有通用的已安装地图查询能力，依次尝试系统地图及常见地图。
-  // 百度明确声明 GCJ-02，腾讯使用同一 GCJ-02 坐标；系统地图按完整地址导航。
-  const otherIOSMaps = [
-    `maps://?daddr=${destination}&dirflg=d`,
-    `baidumap://map/direction?origin=${encodeURIComponent("我的位置")}&destination=latlng:${lat},${lng}|name:${name}&coord_type=gcj02&mode=driving&src=webapp.buji_wedding`,
-    `qqmap://map/routeplan?type=drive&to=${name}&tocoord=${lat},${lng}&referer=bujiWedding`,
-  ];
-  const appCandidates = [
-    amapAppURL,
-    ...(isiOS ? otherIOSMaps : [systemGeoURL]),
-  ];
-  let cancelNavigationFallback = () => {};
   $$("[data-navigate]").forEach((link) => {
-    link.href = isMobile() ? amapAppURL : webMap;
-    if (!isMobile()) {
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-    }
-    link.addEventListener("click", () => {
-      if (!isMobile()) return;
-      cancelNavigationFallback();
-      let timer,
-        index = 1,
-        stopped = false;
-      const cancel = () => {
-        stopped = true;
-        clearTimeout(timer);
-        document.removeEventListener("visibilitychange", onVisibility);
-        window.removeEventListener("pagehide", cancel);
-        window.removeEventListener("blur", cancel);
-      };
-      const onVisibility = () => {
-        if (document.hidden) cancel();
-      };
-      const scheduleNext = () => {
-        const startedAt = performance.now();
-        timer = setTimeout(() => {
-          // 后台恢复、系统确认框造成的长时间暂停不触发后续 App 或网页跳转。
-          if (
-            stopped ||
-            document.hidden ||
-            performance.now() - startedAt > 3500
-          ) {
-            cancel();
-            return;
-          }
-          if (index >= appCandidates.length) {
-            cancel();
-            window.location.assign(webRoute);
-            return;
-          }
-          const nextURL = appCandidates[index++];
-          scheduleNext();
-          try {
-            window.location.assign(nextURL);
-          } catch {
-            /* 当前协议不支持时，继续下一层兜底。 */
-          }
-        }, 1500);
-      };
-      cancelNavigationFallback = cancel;
-      document.addEventListener("visibilitychange", onVisibility);
-      window.addEventListener("pagehide", cancel, { once: true });
-      window.addEventListener("blur", cancel, { once: true });
-      scheduleNext();
-      if (/MicroMessenger/i.test(navigator.userAgent))
-        toast("若地图未打开，可点下方网页地图，或从浏览器打开");
-      // 首次保持原生链接的真实点击手势，不额外弹出自制地图选择器。
+    link.href = amapAppURL;
+    link.removeAttribute("target");
+    link.removeAttribute("rel");
+    link.addEventListener("click", (event) => {
+      if (!isMobile()) {
+        event.preventDefault();
+        toast("请在已安装高德地图的手机上打开请柬进行导航");
+        return;
+      }
+      if (/MicroMessenger/i.test(navigator.userAgent)) {
+        toast("若未唤起高德，请在右上角选择在浏览器打开后，再点击导航");
+      }
+      // 点击直接交给系统唤起高德；没有定时网页兜底，返回请柬也不会突然跳页。
     });
-  });
-  $$("[data-web-map]").forEach((link) => {
-    link.href = isMobile() ? webRoute : webMap;
-    if (!isMobile()) {
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-    }
-    link.addEventListener("click", () => cancelNavigationFallback());
   });
   let lastFocus = null,
     activeDialog = null;
