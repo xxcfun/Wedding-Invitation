@@ -1057,30 +1057,29 @@ const CONFIG = {
     $("#particles").append(n);
   }
   const heroScene = $("#hero-scene");
-  // 抬手后左右挥动；滚动只选择完整帧，反向滚动自然倒放。
-  const heroFrameSequence = [0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7];
-  let heroFramesReady = false;
-  let heroFrame = -1;
+  const heroImage = $("#hero-image");
+  let heroMotion = null;
+  // 滚动只更新目标进度；连续插值和局部形变由独立的 GPU 动画负责。
   function updateHeroWave() {
-    if (!heroScene) return;
-    const progress = motionPaused() ? 0 : Math.max(0, Math.min(1,
+    if (!heroMotion) return;
+    const progress = Math.max(0, Math.min(1,
       scrollY / Math.min(innerHeight * 0.55, 420)));
-    const active = heroFramesReady && !motionPaused();
-    heroScene.classList.toggle("hero-wave-active", active);
-    if (!active) return;
-    const frame = heroFrameSequence[Math.min(heroFrameSequence.length - 1,
-      Math.floor(progress * heroFrameSequence.length))];
-    if (frame === heroFrame) return;
-    heroFrame = frame;
-    heroScene.style.setProperty("--frame-x", `${(frame % 4) * 100 / 3}%`);
-    heroScene.style.setProperty("--frame-y", `${Math.floor(frame / 4) * 100}%`);
+    heroMotion.setPaused(motionPaused());
+    heroMotion.setProgress(progress);
   }
-  // 整张帧图解码成功后才切换，失败时继续展示原封面。
-  const heroFrameImage = new Image();
-  heroFrameImage.src = "assets/hero-wave-frames.webp";
-  heroFrameImage.decode().then(() => {
-    heroFramesReady = true;
-    heroScene.classList.add("hero-wave-ready");
+  // 静图与动画共用同一张高清纹理，避免启动时变糊或切换不同构图。
+  // 高清资源或 WebGL 不可用时仍可完整阅读请柬。
+  heroImage.decode().catch(() => {
+    heroImage.src = "assets/island-cover.jpg";
+    return heroImage.decode();
+  }).then(() => {
+    if (!window.createHeroMotion || /\/island-cover\.jpg(?:$|\?)/.test(heroImage.src)) return;
+    heroMotion = window.createHeroMotion({
+      canvas: $("#hero-motion"),
+      image: heroImage,
+      onReady: () => heroScene.classList.add("hero-motion-ready"),
+      onError: () => heroScene.classList.remove("hero-motion-ready"),
+    });
     updateHeroWave();
   }).catch(() => {});
   window.addEventListener("resize", updateHeroWave, { passive: true });
@@ -1102,6 +1101,9 @@ const CONFIG = {
     syncMotion();
   });
   syncMotion();
+  const particles = $("#particles");
+  const pennants = $$(".pennants");
+  const clouds = $$(".cloud");
   let scrollTick = false;
   window.addEventListener(
     "scroll",
@@ -1110,18 +1112,14 @@ const CONFIG = {
       scrollTick = true;
       requestAnimationFrame(() => {
         const y = Math.min(24, scrollY * 0.012);
-        $("#particles").style.setProperty("--particle-parallax", y + "px");
+        particles.style.setProperty("--particle-parallax", y + "px");
         const heroTop = Math.min(scrollY, 700);
-        heroScene.style.transform = `translateY(${heroTop * 0.025}px)`;
+        if (heroScene) heroScene.style.transform = `translateY(${heroTop * 0.025}px)`;
         updateHeroWave();
-        document.documentElement.style.setProperty(
-          "--mid-parallax",
-          Math.min(10, scrollY * 0.008) + "px",
-        );
-        document.documentElement.style.setProperty(
-          "--far-parallax",
-          Math.min(15, scrollY * 0.004) + "px",
-        );
+        const mid = Math.min(10, scrollY * 0.008) + "px";
+        const far = Math.min(15, scrollY * 0.004) + "px";
+        pennants.forEach((n) => n.style.setProperty("--mid-parallax", mid));
+        clouds.forEach((n) => n.style.setProperty("--far-parallax", far));
         scrollTick = false;
       });
     },

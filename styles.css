@@ -666,7 +666,7 @@ body::before {
   );
 }
 .hero-scene > img,
-.hero-frames {
+.hero-motion {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -674,22 +674,15 @@ body::before {
   object-fit: cover;
   pointer-events: none;
 }
-/* 整幅画面逐帧切换：每格包含完整人物，不再旋转、裁切手臂。 */
-.hero-frames {
+/* 高清单图局部连续形变；底图始终保留，渲染失败时自然回落静态封面。 */
+.hero-motion {
   visibility: hidden;
-  background-image: url("assets/hero-wave-frames.webp");
-  background-size: 400% 200%;
-  background-repeat: no-repeat;
-  background-position: var(--frame-x, 0%) var(--frame-y, 0%);
 }
-.hero-wave-ready.hero-wave-active #hero-image { visibility: hidden; }
-.hero-wave-ready.hero-wave-active .hero-frames { visibility: visible; }
-.no-motion #hero-image { visibility: visible; }
-.no-motion .hero-frames { visibility: hidden; }
+.hero-motion-ready .hero-motion { visibility: visible; }
+.no-motion .hero-motion { visibility: hidden; }
 .no-motion .hero-scene { transform: none !important; }
 @media (prefers-reduced-motion: reduce) {
-  .hero-wave-ready.hero-wave-active #hero-image { visibility: visible; }
-  .hero-wave-ready.hero-wave-active .hero-frames { visibility: hidden; }
+  .hero-motion-ready .hero-motion { visibility: hidden; }
   .hero-scene { transform: none !important; }
 }
 .hero-art::after {

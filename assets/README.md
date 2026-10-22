@@ -1,5 +1,7 @@
 # 小岛请柬素材
 
+当前首屏使用 `island-cover-hd.webp`：1254×1254、WebP quality 96，保留原生高清细节；无损编辑结果保存为 `island-cover-hd.png`。基于原封面，只将新郎右臂调整为完整举手姿势，由 `hero-motion.js` 连续驱动局部挥手与捧花轻摆。生成提示词与控制点见 `hero-motion-notes.md`。旧八帧图与拆层素材保留作历史，不再用于页面。
+
 本次使用内置 ImageGen 工具生成原创婚礼岛屿插画，首屏封面与背景音乐已替换为用户提供的素材。地图、贴纸和结构图标为源码中的原创 SVG。相册的六个位置是可替换的原创插画占位。
 
 - `island-hero.png`：ImageGen 原始输出。

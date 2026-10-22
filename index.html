@@ -34,6 +34,7 @@
     <title>盯 · 您有一封来自布吉岛的来信</title>
     <!-- Tailwind CSS 3.4.17 离线编译，仅包含本页实际使用的工具类。 -->
     <link rel="preload" href="assets/island-round.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="assets/island-cover-hd.webp" as="image" type="image/webp" fetchpriority="high" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -282,15 +283,15 @@
         </div>
         <div class="hero-art" id="lawn">
           <div class="hero-scene" id="hero-scene">
-          <img
-            id="hero-image"
-            src="assets/island-cover.jpg"
-            width="1254"
-            height="1254"
-            fetchpriority="high"
-            alt="蓝天海岛婚礼：新人牵手站在玫瑰花拱下，两侧是可爱的动物伙伴，远处是蓝天与大海"
-          />
-          <div class="hero-frames" aria-hidden="true"></div>
+            <img
+              id="hero-image"
+              src="assets/island-cover-hd.webp"
+              width="1254"
+              height="1254"
+              fetchpriority="high"
+              alt="蓝天海岛婚礼：新人牵手站在玫瑰花拱下，新郎挥手打招呼，新娘手捧鲜花，两侧是可爱的动物伙伴"
+            />
+            <canvas id="hero-motion" class="hero-motion" aria-hidden="true"></canvas>
           </div>
           <svg class="pennants" viewBox="0 0 480 60" aria-hidden="true">
             <path
@@ -863,6 +864,7 @@
         </p>
       </div>
     </div>
+    <script src="hero-motion.js"></script>
     <script src="main.js"></script>
     <!-- 字体许可：ZCOOL KuaiLe，SIL Open Font License 1.1
 Copyright 2018 The ZCOOL KuaiLe Project Authors (https://github.com/googlefonts/zcool-kuaile)
