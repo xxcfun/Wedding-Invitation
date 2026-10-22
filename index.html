@@ -274,13 +274,14 @@
         <div class="cloud cloud-a" aria-hidden="true"></div>
         <div class="cloud cloud-b" aria-hidden="true"></div>
         <div class="cover-copy">
-          <div class="edition">一封来自小岛的幸福邀请</div>
+          <div class="edition">一封来自布吉岛的幸福邀请</div>
           <h1 id="cover-title">
             <span>布吉岛</span><span class="second-line">来信</span>
           </h1>
           <p class="cover-subtitle">邀请你一起见证幸福时刻</p>
         </div>
         <div class="hero-art" id="lawn">
+          <div class="hero-scene" id="hero-scene">
           <img
             id="hero-image"
             src="assets/island-cover.jpg"
@@ -288,7 +289,15 @@
             height="1254"
             fetchpriority="high"
             alt="蓝天海岛婚礼：新人牵手站在玫瑰花拱下，两侧是可爱的动物伙伴，远处是蓝天与大海"
-          /><svg class="pennants" viewBox="0 0 480 60" aria-hidden="true">
+          />
+          <div class="hero-rig" aria-hidden="true">
+            <img class="hero-plate" src="assets/hero-wave-base.jpg" width="1254" height="1254" alt="" decoding="async" />
+            <div class="hero-bride-pivot"><img class="hero-bride-arm" src="assets/hero-bride-arm.png" width="1254" height="1254" alt="" decoding="async" /></div>
+            <img class="hero-groom-shoulder" src="assets/island-cover.jpg" width="1254" height="1254" alt="" decoding="async" />
+            <div class="hero-groom-pivot"><img class="hero-groom-arm" src="assets/hero-groom-arm.png" width="1254" height="1254" alt="" decoding="async" /></div>
+          </div>
+          </div>
+          <svg class="pennants" viewBox="0 0 480 60" aria-hidden="true">
             <path
               d="M-10 3Q240 88 490 3"
               fill="none"
@@ -350,13 +359,13 @@
           <h2 class="letter-greeting">布吉岛播报时间</h2>
           <div class="island-broadcast">
             <p>
-              大家好！这里是布吉岛播报时间。<br />今天是<span
+              各位居民，大家好！我是狸克。<br />今天是<span
                 id="broadcast-today"
               ></span
               >。
             </p>
             <p>
-              接下来播报重要岛内通知
+              嗯嗯，今天有一件特别值得庆祝的事呢
               <svg class="icon mini" aria-hidden="true">
                 <use href="#i-star" />
               </svg>
@@ -365,10 +374,10 @@
               居民<span data-bind="groom"></span>与居民<span
                 data-bind="bride"
               ></span
-              >，经过长久相伴，决定缔结永久伙伴契约，举办婚礼庆典！
+              >决定一起展开全新的生活，要举办婚礼了呢！能看着两位在岛上收获幸福，我也很高兴，是说！
             </p>
             <p>
-              在此诚挚邀请各位好朋友，前来小岛参加本次仪式，一同见证这份美好的时刻。
+              这次的幸福庆典，当然也少不了各位的参与。请大家来布吉岛坐坐，一起为两位送上祝福吧！
             </p>
             <!-- <div class="broadcast-details">
               <p>
@@ -384,11 +393,11 @@
             </div> -->
             <p>
               <strong>今日小贴士</strong
-              ><br />到场不用盛装打扮，带上好心情与笑容就可以。现场备好了点心、饮品，欢迎大家自在欢聚。
+              ><br />服装方面不用费心准备，带上笑容来就好。点心和饮品也都安排妥当了，请大家放轻松，好好享受这场庆典呢！
             </p>
-            <p>今天的播报到此结束。</p>
+            <p>那么，今天的岛内广播就到这里。婚礼当天，我们不见不散，是说！</p>
           </div>
-          <div class="letter-sign">那么，祝大家度过闪闪发光的一天！</div>
+          <div class="letter-sign">祝两位的新生活，每天都有新的幸福进账呢！</div>
           <svg class="decoration flower-deco" aria-hidden="true">
             <use href="#i-flower" />
           </svg>
@@ -441,7 +450,7 @@
         data-sticker="3"
         aria-labelledby="info-title"
       >
-        <h2 id="info-title" class="wood hanging-title reveal">小岛婚礼公告</h2>
+        <h2 id="info-title" class="wood hanging-title reveal">婚礼公告</h2>
         <div class="paper info-paper reveal">
           <div class="eyebrow">这一天，为你留座</div>
           <div class="info-date" data-date="short">2026.11.04</div>
@@ -512,7 +521,7 @@
             >点击地图 · 开启导航</span
           >
         </a>
-        <p class="location-address" data-bind="address">
+        <!-- <p class="location-address" data-bind="address">
           山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）
         </p>
         <p class="location-note">优先高德，未唤起时尝试其他地图</p>
@@ -522,7 +531,7 @@
           href="https://uri.amap.com/marker?position=118.457025,36.694075&amp;coordinate=gaode&amp;callnative=0"
           >直接打开高德网页地图</a
         >
-        <p class="location-note">手绘位置示意，实际路线以导航为准</p>
+        <p class="location-note">手绘位置示意，实际路线以导航为准</p> -->
         <svg class="cross-sprig" aria-hidden="true">
           <use href="#i-sprig" />
         </svg>
@@ -573,7 +582,7 @@
         aria-labelledby="agenda-title"
       >
         <header class="section-head reveal">
-          <div class="eyebrow">今日小岛任务 · 02</div>
+          <div class="eyebrow">今日布吉岛任务 · 02</div>
           <h2 id="agenda-title">一起完成幸福清单</h2>
           <p class="subcopy">不赶时间，只管开心</p>
         </header>
@@ -599,7 +608,7 @@
         aria-labelledby="album-title"
       >
         <header class="section-head reveal">
-          <div class="eyebrow">小岛回忆簿 · 03</div>
+          <div class="eyebrow">布吉岛回忆簿 · 03</div>
           <h2 id="album-title">把喜欢，存成永远</h2>
           <p class="subcopy">有你在的画面，都值得珍藏</p>
         </header>
@@ -834,7 +843,7 @@
           <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
         </button>
         <div class="eyebrow">把幸福寄给远方的你</div>
-        <h2 id="share-guide-title">给你一封小岛来信</h2>
+        <h2 id="share-guide-title">给你一封婚礼来信</h2>
         <p class="share-hint" id="share-instructions">
           长按邀请卡保存，发送给朋友或分享到朋友圈
         </p>

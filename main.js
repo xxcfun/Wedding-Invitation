@@ -75,10 +75,19 @@ const CONFIG = {
     { src: "", title: "余生请多指教", icon: "heart", palette: "cream" },
   ],
   sampleWishes: [
-    // 可修改：示例祝福
-    { name: "小岛的好朋友", text: "祝你们永远幸福！" },
-    { name: "来赴约的人", text: "小岛婚礼太浪漫啦！" },
-    { name: "幸福观察员", text: "一定要一直开心下去！" },
+    // 根据角色特点创作的婚礼祝福，并非游戏原台词。
+    {
+      name: "狸克",
+      text: "两位的新生活计划，今天正式开工了呢！祝你们把小家经营得暖暖的，幸福的利息每天都在增加，是说！",
+    },
+    {
+      name: "傅达",
+      text: "呼呼！如此珍贵的幸福时刻，真想好好珍藏起来呢。愿两位共同发现生活中的美好，让回忆的馆藏越来越丰富！",
+    },
+    {
+      name: "西施惠",
+      text: "各位居民请注意，今天岛上有一件特别幸福的事！恭喜两位结婚！那个……光是看着你们，我也忍不住笑起来了呢！",
+    },
   ],
   share: {
     title: "布吉岛来信",
@@ -1047,9 +1056,26 @@ const CONFIG = {
     n.append(icon(particleTypes[i % 6]));
     $("#particles").append(n);
   }
+  const heroScene = $("#hero-scene");
+  function updateHeroWave() {
+    if (!heroScene) return;
+    const progress = motionPaused() ? 0 : Math.max(0, Math.min(1,
+      scrollY / Math.min(innerHeight * 0.55, 420)));
+    const lift = 1 - Math.pow(1 - Math.min(1, progress / 0.55), 3);
+    const wave = Math.sin(Math.max(0, progress - 0.35) * Math.PI * 6);
+    heroScene.style.setProperty("--wave-blend", Math.min(1, progress * 12));
+    heroScene.style.setProperty("--groom-wave", `${-110 * lift + wave * 9 * lift}deg`);
+    heroScene.style.setProperty("--bride-wave", `${6 * lift + wave * 6 * lift}deg`);
+  }
+  // 分层素材完整加载后才启用；加载失败时保留原封面。
+  Promise.all([...document.querySelectorAll(".hero-rig img")].map((img) => img.decode()))
+    .then(() => { heroScene.classList.add("hero-wave-ready"); updateHeroWave(); })
+    .catch(() => {});
+  window.addEventListener("resize", updateHeroWave, { passive: true });
   const syncMotion = () => {
     document.body.classList.toggle("no-motion", motionPaused());
     if (motionPaused()) stopCollectionAnimation();
+    updateHeroWave();
     $("#ambient-toggle").setAttribute("aria-pressed", String(manualPause));
     $("#ambient-toggle").textContent = manualPause
       ? "开启装饰动效"
@@ -1074,7 +1100,8 @@ const CONFIG = {
         const y = Math.min(24, scrollY * 0.012);
         $("#particles").style.setProperty("--particle-parallax", y + "px");
         const heroTop = Math.min(scrollY, 700);
-        $("#hero-image").style.transform = `translateY(${heroTop * 0.025}px)`;
+        heroScene.style.transform = `translateY(${heroTop * 0.025}px)`;
+        updateHeroWave();
         document.documentElement.style.setProperty(
           "--mid-parallax",
           Math.min(10, scrollY * 0.008) + "px",
