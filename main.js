@@ -91,13 +91,14 @@ const CONFIG = {
   ],
   share: {
     title: "刁勇辰与李汝静 · 布吉岛来信",
-    description: "2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
+    description:
+      "2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
     image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；同步用于 OG 与微信配置
     link: "https://wedding.xxcfun.cn", // 可修改：线上请柬网址，邀请卡二维码指向该地址
     poster: "assets/island-invitation-hd.jpg", // 当前高清封面制作的 1080×1620 邀请图卡；修改资料后运行 scripts/build-share-assets.cjs 重建
   },
   wechat: {
-    signatureEndpoint: "", // 可修改：服务端微信 JS-SDK 签名接口，例如 /api/wechat-signature；接收 ?url=当前完整无hash URL，返回 appId,timestamp,nonceStr,signature。严禁在 HTML 内存放 appSecret。
+    signatureEndpoint: "https://wxapi.xxcfun.cn/wechat-signature.php", // 可修改：服务端微信 JS-SDK 签名接口，例如 /api/wechat-signature；接收 ?url=当前完整无hash URL，返回 appId,timestamp,nonceStr,signature。严禁在 HTML 内存放 appSecret。
   },
 };
 /* =====================================================================
@@ -299,7 +300,39 @@ const CONFIG = {
     btn.addEventListener("click", () => openPhoto(i));
     $("#photo-grid").append(btn);
   });
-  // 通过高德官方 App Scheme 直接导航；保留原生点击手势，不跳转网页或其他地图。
+  // 地图图片仅复制详细地址，供访客自行粘贴到高德地图中搜索。
+  $("[data-copy-address]").addEventListener("click", async () => {
+    const address = CONFIG.address;
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(address);
+      copied = true;
+    } catch {
+      // 兼容不支持 Clipboard API 或禁止剪贴板权限的浏览器。
+      const previousFocus = document.activeElement;
+      const input = document.createElement("textarea");
+      input.value = address;
+      input.readOnly = true;
+      input.style.cssText = "position:fixed;top:0;left:-9999px;font-size:16px";
+      document.body.append(input);
+      try {
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+        copied = document.execCommand("copy");
+      } catch {
+        copied = false;
+      } finally {
+        input.remove();
+        previousFocus?.focus({ preventScroll: true });
+      }
+    }
+    if (copied) {
+      toast("详细地址已复制，可粘贴到高德地图中搜索");
+    } else {
+      window.prompt("自动复制未成功，请长按或选中下方详细地址复制：", address);
+    }
+  });
+  // 婚礼信息中的导航按钮通过高德官方 App Scheme 直接导航。
   const { longitude: lng, latitude: lat } = CONFIG;
   const name = encodeURIComponent(CONFIG.venue);
   const isiOS =
@@ -992,26 +1025,36 @@ const CONFIG = {
   // 滚动只更新目标进度；连续插值和局部形变由独立的 GPU 动画负责。
   function updateHeroWave() {
     if (!heroMotion) return;
-    const progress = Math.max(0, Math.min(1,
-      scrollY / Math.min(innerHeight * 0.55, 420)));
+    const progress = Math.max(
+      0,
+      Math.min(1, scrollY / Math.min(innerHeight * 0.55, 420)),
+    );
     heroMotion.setPaused(motionPaused());
     heroMotion.setProgress(progress);
   }
   // 静图与动画共用同一张高清纹理，避免启动时变糊或切换不同构图。
   // 高清资源或 WebGL 不可用时仍可完整阅读请柬。
-  heroImage.decode().catch(() => {
-    heroImage.src = "assets/island-cover.jpg";
-    return heroImage.decode();
-  }).then(() => {
-    if (!window.createHeroMotion || /\/island-cover\.jpg(?:$|\?)/.test(heroImage.src)) return;
-    heroMotion = window.createHeroMotion({
-      canvas: $("#hero-motion"),
-      image: heroImage,
-      onReady: () => heroScene.classList.add("hero-motion-ready"),
-      onError: () => heroScene.classList.remove("hero-motion-ready"),
-    });
-    updateHeroWave();
-  }).catch(() => {});
+  heroImage
+    .decode()
+    .catch(() => {
+      heroImage.src = "assets/island-cover.jpg";
+      return heroImage.decode();
+    })
+    .then(() => {
+      if (
+        !window.createHeroMotion ||
+        /\/island-cover\.jpg(?:$|\?)/.test(heroImage.src)
+      )
+        return;
+      heroMotion = window.createHeroMotion({
+        canvas: $("#hero-motion"),
+        image: heroImage,
+        onReady: () => heroScene.classList.add("hero-motion-ready"),
+        onError: () => heroScene.classList.remove("hero-motion-ready"),
+      });
+      updateHeroWave();
+    })
+    .catch(() => {});
   window.addEventListener("resize", updateHeroWave, { passive: true });
   const syncMotion = () => {
     document.body.classList.toggle("no-motion", motionPaused());
@@ -1044,7 +1087,8 @@ const CONFIG = {
         const y = Math.min(24, scrollY * 0.012);
         particles.style.setProperty("--particle-parallax", y + "px");
         const heroTop = Math.min(scrollY, 700);
-        if (heroScene) heroScene.style.transform = `translateY(${heroTop * 0.025}px)`;
+        if (heroScene)
+          heroScene.style.transform = `translateY(${heroTop * 0.025}px)`;
         updateHeroWave();
         const mid = Math.min(10, scrollY * 0.008) + "px";
         const far = Math.min(15, scrollY * 0.004) + "px";
