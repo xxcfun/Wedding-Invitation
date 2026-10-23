@@ -520,6 +520,32 @@ const CONFIG = {
   let wechatAttempt = 0;
   const shareStatus = $("#share-status");
   const shareRetry = $("#share-retry");
+  // 仅排查链接开启诊断；不输出密钥、票据或签名内容。
+  const shareDebug = new URLSearchParams(location.search).get("wechat_debug") === "1";
+  const shareDiagnostic = { version: "20261023-2", stage: "initial", results: {} };
+  let diagnosticOutput;
+  if (shareDebug) {
+    const details = el("details", "share-poster-option");
+    details.open = true;
+    details.append(el("summary", "", "微信分享检查结果"));
+    diagnosticOutput = el("pre");
+    diagnosticOutput.id = "wechat-diagnostics";
+    diagnosticOutput.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7";
+    details.append(diagnosticOutput);
+    shareRetry.after(details);
+  }
+  function recordShareDiagnostic(stage, result) {
+    shareDiagnostic.stage = stage;
+    if (result !== undefined) {
+      shareDiagnostic.results[stage] = String(result).slice(0, 240);
+    }
+    if (diagnosticOutput) diagnosticOutput.textContent = JSON.stringify(shareDiagnostic, null, 2);
+  }
+  function shareSDKError(stage, result) {
+    const message = result?.errMsg || result?.err_msg || "failed";
+    recordShareDiagnostic(stage, message);
+    return Error(`${stage}: ${message}`);
+  }
   $("#share-card-title").textContent = shareData.title;
   $("#share-card-description").textContent = shareData.desc;
   $("#share-card-image").src = shareData.imgUrl;
@@ -575,6 +601,8 @@ const CONFIG = {
     if (!inWechat || wechatState === "ready") return Promise.resolve();
     if (wechatTask) return wechatTask;
     const attempt = ++wechatAttempt;
+    shareDiagnostic.results = {};
+    recordShareDiagnostic("signature");
     wechatState = "loading";
     renderWechatState();
     wechatTask = (async () => {
@@ -587,21 +615,29 @@ const CONFIG = {
         const response = await fetch(signatureURL, {
           signal: controller.signal, cache: "no-store", credentials: "omit",
         });
-        if (!response.ok) throw Error("signature_http_" + response.status);
         const data = await response.json();
+        if (!response.ok) {
+          const code = typeof data.error === "string" && /^[a-z0-9_]+$/.test(data.error)
+            ? data.error : "signature_http_" + response.status;
+          throw Error(code);
+        }
         if (!data.appId || !data.timestamp || !data.nonceStr || !data.signature)
           throw Error("signature_invalid");
         clearTimeout(timer);
+        recordShareDiagnostic("signature", "ok");
+        recordShareDiagnostic("sdk");
         await loadWechatSDK();
+        recordShareDiagnostic("sdk", "ok");
+        recordShareDiagnostic("config");
         const wx = window.wx;
         await withShareTimeout(new Promise((resolve, reject) => {
           wx.ready(resolve);
-          wx.error(() => {
+          wx.error((result) => {
             if (attempt === wechatAttempt) {
               wechatState = "error";
               renderWechatState();
             }
-            reject(Error("wx_config"));
+            reject(shareSDKError("config", result));
           });
           wx.config({
             debug: false,
@@ -610,9 +646,18 @@ const CONFIG = {
             jsApiList: ["updateAppMessageShareData", "updateTimelineShareData", "showOptionMenu"],
           });
         }), "wx_config_timeout");
+        recordShareDiagnostic("config", "ok");
         // wx.ready 仅代表授权完成；两个分享接口均确认成功才显示就绪。
         const setShare = (method, value) => withShareTimeout(new Promise((resolve, reject) => {
-          wx[method]({ ...value, success: resolve, fail: () => reject(Error(method)) });
+          recordShareDiagnostic(method, "pending");
+          wx[method]({
+            ...value,
+            success: (result) => {
+              if (attempt === wechatAttempt) recordShareDiagnostic(method, result?.errMsg || "ok");
+              resolve();
+            },
+            fail: (result) => reject(shareSDKError(method, result)),
+          });
         }), "wx_share_timeout");
         await Promise.all([
           setShare("updateAppMessageShareData", shareData),
@@ -622,8 +667,10 @@ const CONFIG = {
         ]);
         wx.showOptionMenu();
         wechatState = "ready";
+        recordShareDiagnostic("ready");
       } catch (error) {
         wechatState = "error";
+        recordShareDiagnostic("error", error.name === "AbortError" ? "signature_timeout" : error.message);
         console.warn("[wechat-share]", error.name === "AbortError" ? "signature_timeout" : error.message);
       } finally {
         clearTimeout(timer);

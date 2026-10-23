@@ -5,6 +5,7 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
+const officialSDK = process.env.WECHAT_SDK_PATH ? fs.readFileSync(process.env.WECHAT_SDK_PATH, 'utf8') : null;
 const server = http.createServer((req, res) => {
   const file = path.join(root, new URL(req.url, 'http://localhost').pathname === '/' ? 'index.html' : decodeURIComponent(new URL(req.url, 'http://localhost').pathname));
   const types = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.webp':'image/webp', '.jpg':'image/jpeg', '.ttf':'font/ttf'};
@@ -16,12 +17,12 @@ const server = http.createServer((req, res) => {
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await chromium.launch({executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless:true});
   try {
-    for (const mode of ['success', 'signature-retry', 'invalid-signature', 'sdk-error', 'config-error', 'api-error', 'timeout', 'browser']) {
+    for (const mode of ['success', 'signature-retry', 'signature-code', 'invalid-signature', 'sdk-error', 'config-error', 'api-error', 'timeout', 'browser']) {
       const page = await browser.newPage({viewport:{width:390,height:844}, userAgent:mode === 'browser' ? 'Mozilla/5.0' : 'Mozilla/5.0 MicroMessenger/8.0.50'});
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       let signatures = 0;
-      const entry = `${base}/?from=singlemessage&value=a%2Bb#invitation`;
+      const entry = `${base}/?from=singlemessage&value=a%2Bb&wechat_debug=1#invitation`;
       await page.addInitScript(({mode}) => {
         sessionStorage.setItem("buji-visited", "1");
         window.__shareCalls = {};
@@ -35,17 +36,31 @@ const server = http.createServer((req, res) => {
       await page.route('https://wxapi.xxcfun.cn/**', async route => {
         signatures++;
         assert.equal(new URL(route.request().url()).searchParams.get('url'), entry.split('#')[0]);
-        await route.fulfill({status:mode === 'signature-retry' && signatures === 1 ? 503 : 200,
+        await route.fulfill({status:mode === 'signature-code' || (mode === 'signature-retry' && signatures === 1) ? 503 : 200,
           contentType:'application/json', headers:{'Access-Control-Allow-Origin':'*'},
-          body:JSON.stringify(mode === 'invalid-signature' ? {} : {appId:'wx-test', timestamp:1790000000, nonceStr:'test', signature:'test'})});
+          body:JSON.stringify(mode === 'signature-code' ? {error:'wechat_error_40125'} : mode === 'invalid-signature' ? {} : {appId:'wx-test', timestamp:1790000000, nonceStr:'test', signature:'test'})});
       });
-      await page.route('https://res.wx.qq.com/**', route => mode === 'sdk-error' ? route.abort() : route.fulfill({contentType:'text/javascript',body:`
+      await page.route('https://res.wx.qq.com/**', route => mode === 'sdk-error' ? route.abort() : route.fulfill({contentType:'text/javascript',body:officialSDK ? `
+        window.WeixinJSBridge = {
+          on() {},
+          invoke(method, data, callback) {
+            const names = {preVerifyJSAPI:'config', updateAppMessageShareData:'friend', updateTimelineShareData:'timeline'};
+            if (names[method]) window.__shareCalls[names[method]] = data;
+            if (method === 'showOptionMenu') window.__shareCalls.menu = true;
+            if (window.__mode === 'timeout' && method === 'updateAppMessageShareData') return;
+            let result = 'ok';
+            if (window.__mode === 'config-error' && method === 'preVerifyJSAPI') result = 'invalid signature';
+            if (window.__mode === 'api-error' && method === 'updateAppMessageShareData') result = 'permission denied';
+            queueMicrotask(() => callback?.({err_msg:method + ':' + result}));
+          }
+        };
+      ` + officialSDK : `
         (() => {
           let ready, error;
           window.wx = {
             ready(fn) { ready = fn; }, error(fn) { error = fn; },
-            config(data) { window.__shareCalls.config = data; queueMicrotask(() => window.__mode === 'config-error' ? error({errMsg:'invalid signature'}) : ready()); },
-            updateAppMessageShareData(data) { window.__shareCalls.friend = data; if (window.__mode !== 'timeout') queueMicrotask(() => window.__mode === 'api-error' ? data.fail() : data.success()); },
+            config(data) { window.__shareCalls.config = data; queueMicrotask(() => window.__mode === 'config-error' ? error({errMsg:'config:invalid signature'}) : ready()); },
+            updateAppMessageShareData(data) { window.__shareCalls.friend = data; if (window.__mode !== 'timeout') queueMicrotask(() => window.__mode === 'api-error' ? data.fail({errMsg:'updateAppMessageShareData:permission denied'}) : data.success()); },
             updateTimelineShareData(data) { window.__shareCalls.timeline = data; queueMicrotask(() => data.success()); },
             showOptionMenu() { window.__shareCalls.menu = true; }
           };
@@ -69,6 +84,18 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.locator('#share-retry').isVisible(), false);
       }
       if (mode === 'browser') assert.equal(signatures, 0);
+      const diagnostic = await page.locator('#wechat-diagnostics').textContent();
+      if (mode === 'signature-code') assert.ok(diagnostic.includes('wechat_error_40125'));
+      if (mode === 'config-error') assert.ok(diagnostic.includes('config:invalid signature'));
+      if (mode === 'api-error') assert.ok(diagnostic.includes('permission denied'));
+      assert.ok(!diagnostic.includes('nonceStr') && !diagnostic.includes('wx-test'));
+      if (mode === 'success') {
+        const clean = await browser.newPage();
+        await clean.route("https://**", route => route.abort());
+        await clean.goto(base);
+        assert.equal(await clean.locator('#wechat-diagnostics').count(), 0);
+        await clean.close();
+      }
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
       assert.deepEqual(errors, []);
       if (mode === 'success') {
@@ -83,7 +110,7 @@ const server = http.createServer((req, res) => {
         }
         await page.setViewportSize({width:390,height:844});
       }
-      await page.locator('.share-poster-option summary').click();
+      await page.getByText('也可以保存图片邀请卡', {exact:true}).click();
       assert.equal(await page.locator('#share-poster').isVisible(), true);
       await page.keyboard.press('Escape');
       await page.waitForFunction(() => document.querySelector('#share-guide').hidden);

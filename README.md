@@ -114,3 +114,9 @@
 ## 微信分享前端检查
 
 在可解析 `playwright` 的 Node.js 环境运行 `node scripts/check-wechat-share.cjs`（可通过 `CHROME_PATH` 指定 Chrome）。模拟签名和微信 SDK，覆盖好友/朋友圈内容、带查询参数 URL 的签名、签名失败重试、无效响应、SDK 加载失败、授权失败、分享 API 失败、超时、非微信浏览器、弹窗关闭与备用图片。此检查不替代正式域名的微信实机验收。
+
+### 分享失败排查
+
+排查时使用 `https://wedding.xxcfun.cn/?wechat_debug=1`，在微信打开后点击页面分享按钮，查看“微信分享检查结果”。仅该参数开启诊断，普通访问不显示；诊断保留签名服务错误码及 SDK 原始 `errMsg`，不包含 AppSecret、access_token、jsapi_ticket 或签名值。`config:invalid signature` 需要核对当前 URL 的签名，`permission denied` 需要核对公众号接口权限和 JS 接口安全域名。两个分享接口成功只能证明分享内容已设置，仍需在目标微信客户端从网页右上角菜单验证实际卡片。
+
+排查代码已使用官方 `jweixin-1.6.0.js` 配合模拟微信桥接验证。可设置 `WECHAT_SDK_PATH=/absolute/path/jweixin-1.6.0.js` 运行 `node scripts/check-wechat-share.cjs`，额外验证官方 SDK 对签名无效和权限不足的回调处理；这仍不代表真实公众号已获授权。
