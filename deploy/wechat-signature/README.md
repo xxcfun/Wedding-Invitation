@@ -1,5 +1,7 @@
 # 宝塔部署微信分享签名接口
 
+> 历史原生链接分享方案。当前请柬采用图片分享，已移除前端签名接口配置和微信 JS-SDK，不调用本服务。此文档仅供以后具备相应公众号权限时参考。
+
 适用于当前 CentOS 7.9 + 宝塔 8.0.5 环境，使用宝塔现有 Nginx/Apache + PHP，不需要 Node.js、Composer、数据库或 Redis。使用面板能提供的 PHP 8.x，需开启 cURL 扩展；代码语法兼容 PHP 7.4。接口默认域名使用 `wxapi.xxcfun.cn`，需要你新建该 DNS 记录。
 
 请柬继续由 Vercel 的 `https://wedding.xxcfun.cn` 提供，服务器只运行签名接口。以下路径均为你的服务器路径。

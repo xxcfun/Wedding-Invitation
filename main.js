@@ -93,12 +93,9 @@ const CONFIG = {
     title: "刁勇辰与李汝静 · 布吉岛来信",
     description:
       "2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
-    image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；同步用于 OG 与微信配置
+    image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；用于网页预览元信息
     link: "https://wedding.xxcfun.cn", // 可修改：线上请柬网址，邀请卡二维码指向该地址
     poster: "assets/island-invitation-hd.jpg", // 当前高清封面制作的 1080×1620 邀请图卡；修改资料后运行 scripts/build-share-assets.cjs 重建
-  },
-  wechat: {
-    signatureEndpoint: "https://wxapi.xxcfun.cn/wechat-signature.php", // 可修改：服务端微信 JS-SDK 签名接口，例如 /api/wechat-signature；接收 ?url=当前完整无hash URL，返回 appId,timestamp,nonceStr,signature。严禁在 HTML 内存放 appSecret。
   },
 };
 /* =====================================================================
@@ -505,212 +502,36 @@ const CONFIG = {
     audio.preload = "auto";
     setMusic(true, true);
   }
-  // 签名使用实际进入页面的 URL，保留 query 和编码，仅去掉 hash。
+  // 图片邀请分享：微信原生长按保存，不依赖公众号或微信 JS-SDK。
   const inWechat = /MicroMessenger/i.test(navigator.userAgent);
-  const wechatEntryURL = location.href.split("#")[0];
-  const shareData = {
-    title: CONFIG.share.title,
-    desc: CONFIG.share.description,
-    link: new URL(CONFIG.share.link || wechatEntryURL, location.href).href,
-    imgUrl: new URL(CONFIG.share.image, location.href).href,
-  };
-  let wechatState = inWechat ? "loading" : "browser";
-  let wechatTask = null;
-  let sdkTask = null;
-  let wechatAttempt = 0;
-  const shareStatus = $("#share-status");
-  const shareRetry = $("#share-retry");
-  // 仅排查链接开启诊断；不输出密钥、票据或签名内容。
-  const shareDebug = new URLSearchParams(location.search).get("wechat_debug") === "1";
-  const shareDiagnostic = { version: "20261023-2", stage: "initial", results: {} };
-  let diagnosticOutput;
-  if (shareDebug) {
-    const details = el("details", "share-poster-option");
-    details.open = true;
-    details.append(el("summary", "", "微信分享检查结果"));
-    diagnosticOutput = el("pre");
-    diagnosticOutput.id = "wechat-diagnostics";
-    diagnosticOutput.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7";
-    details.append(diagnosticOutput);
-    shareRetry.after(details);
-  }
-  function recordShareDiagnostic(stage, result) {
-    shareDiagnostic.stage = stage;
-    if (result !== undefined) {
-      shareDiagnostic.results[stage] = String(result).slice(0, 240);
-    }
-    if (diagnosticOutput) diagnosticOutput.textContent = JSON.stringify(shareDiagnostic, null, 2);
-  }
-  function shareSDKError(stage, result) {
-    const message = result?.errMsg || result?.err_msg || "failed";
-    recordShareDiagnostic(stage, message);
-    return Error(`${stage}: ${message}`);
-  }
-  $("#share-card-title").textContent = shareData.title;
-  $("#share-card-description").textContent = shareData.desc;
-  $("#share-card-image").src = shareData.imgUrl;
-  for (const [property, content] of Object.entries({
-    "og:title": shareData.title, "og:description": shareData.desc,
-    "og:url": shareData.link, "og:image": shareData.imgUrl,
-    "og:image:secure_url": shareData.imgUrl,
-  })) {
-    const meta = document.querySelector(`meta[property="${property}"]`);
-    if (meta) meta.content = content;
-  }
-  function renderWechatState() {
-    $("#share-instructions").textContent = inWechat
-      ? "点击微信右上角「···」，选择「发送给朋友」或「分享到朋友圈」"
-      : "请先在微信中打开请柬，再通过右上角「···」分享";
-    const messages = {
-      browser: "微信中打开后，可分享带标题和封面的请柬链接。",
-      loading: "正在准备微信分享…",
-      ready: "分享已准备好，发送给朋友即可打开完整请柬。",
-      error: "微信分享暂未准备好，请重试；也可以保存下方邀请卡。",
-    };
-    shareStatus.textContent = messages[wechatState];
-    shareStatus.setAttribute("aria-busy", String(wechatState === "loading"));
-    shareRetry.hidden = wechatState !== "error";
-  }
-  function withShareTimeout(promise, label) {
-    let timer;
-    return Promise.race([
-      promise,
-      new Promise((_, reject) => {
-        timer = setTimeout(() => reject(Error(label)), 12000);
-      }),
-    ]).finally(() => clearTimeout(timer));
-  }
-  function loadWechatSDK() {
-    if (window.wx) return Promise.resolve();
-    if (sdkTask) return sdkTask;
-    const script = el("script");
-    script.src = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
-    script.async = true;
-    sdkTask = withShareTimeout(new Promise((resolve, reject) => {
-      script.onload = () => window.wx ? resolve() : reject(Error("sdk_missing"));
-      script.onerror = () => reject(Error("sdk_load"));
-      document.head.append(script);
-    }), "sdk_timeout").catch((error) => {
-      script.remove();
-      sdkTask = null;
-      throw error;
-    });
-    return sdkTask;
-  }
-  function configureWechat() {
-    if (!inWechat || wechatState === "ready") return Promise.resolve();
-    if (wechatTask) return wechatTask;
-    const attempt = ++wechatAttempt;
-    shareDiagnostic.results = {};
-    recordShareDiagnostic("signature");
-    wechatState = "loading";
-    renderWechatState();
-    wechatTask = (async () => {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 12000);
-      try {
-        if (!CONFIG.wechat.signatureEndpoint) throw Error("signature_endpoint_missing");
-        const signatureURL = new URL(CONFIG.wechat.signatureEndpoint, location.href);
-        signatureURL.searchParams.set("url", wechatEntryURL);
-        const response = await fetch(signatureURL, {
-          signal: controller.signal, cache: "no-store", credentials: "omit",
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          const code = typeof data.error === "string" && /^[a-z0-9_]+$/.test(data.error)
-            ? data.error : "signature_http_" + response.status;
-          throw Error(code);
-        }
-        if (!data.appId || !data.timestamp || !data.nonceStr || !data.signature)
-          throw Error("signature_invalid");
-        clearTimeout(timer);
-        recordShareDiagnostic("signature", "ok");
-        recordShareDiagnostic("sdk");
-        await loadWechatSDK();
-        recordShareDiagnostic("sdk", "ok");
-        recordShareDiagnostic("config");
-        const wx = window.wx;
-        await withShareTimeout(new Promise((resolve, reject) => {
-          wx.ready(resolve);
-          wx.error((result) => {
-            if (attempt === wechatAttempt) {
-              wechatState = "error";
-              renderWechatState();
-            }
-            reject(shareSDKError("config", result));
-          });
-          wx.config({
-            debug: false,
-            appId: data.appId, timestamp: data.timestamp,
-            nonceStr: data.nonceStr, signature: data.signature,
-            jsApiList: ["updateAppMessageShareData", "updateTimelineShareData", "showOptionMenu"],
-          });
-        }), "wx_config_timeout");
-        recordShareDiagnostic("config", "ok");
-        // wx.ready 仅代表授权完成；两个分享接口均确认成功才显示就绪。
-        const setShare = (method, value) => withShareTimeout(new Promise((resolve, reject) => {
-          recordShareDiagnostic(method, "pending");
-          wx[method]({
-            ...value,
-            success: (result) => {
-              if (attempt === wechatAttempt) recordShareDiagnostic(method, result?.errMsg || "ok");
-              resolve();
-            },
-            fail: (result) => reject(shareSDKError(method, result)),
-          });
-        }), "wx_share_timeout");
-        await Promise.all([
-          setShare("updateAppMessageShareData", shareData),
-          setShare("updateTimelineShareData", {
-            title: shareData.title, link: shareData.link, imgUrl: shareData.imgUrl,
-          }),
-        ]);
-        wx.showOptionMenu();
-        wechatState = "ready";
-        recordShareDiagnostic("ready");
-      } catch (error) {
-        wechatState = "error";
-        recordShareDiagnostic("error", error.name === "AbortError" ? "signature_timeout" : error.message);
-        console.warn("[wechat-share]", error.name === "AbortError" ? "signature_timeout" : error.message);
-      } finally {
-        clearTimeout(timer);
-        renderWechatState();
-      }
-    })().finally(() => { wechatTask = null; });
-    return wechatTask;
-  }
-  shareRetry.onclick = () => configureWechat();
-  renderWechatState();
-  configureWechat();
   const sharePoster = $("#share-poster");
+  const shareSave = $("#share-save");
   const embeddedPoster = sharePoster.getAttribute("src");
-  $("#share-save").href = embeddedPoster;
-  // 微信长按使用同源 HTTPS 图片更可靠；离线打开或网络失败则使用内嵌图卡。
+  shareSave.href = embeddedPoster;
   if (/^https?:$/.test(location.protocol) && CONFIG.share.poster) {
-    sharePoster.addEventListener(
-      "error",
-      () => {
-        sharePoster.src = embeddedPoster;
-      },
-      { once: true },
-    );
-    sharePoster.src = new URL(CONFIG.share.poster, location.href).href;
+    sharePoster.addEventListener("error", () => {
+      sharePoster.src = embeddedPoster;
+      shareSave.href = embeddedPoster;
+    }, { once: true });
+    const posterURL = new URL(CONFIG.share.poster, location.href).href;
+    sharePoster.src = posterURL;
+    shareSave.href = posterURL;
   }
+  // 普通浏览器提供下载；微信直接长按图片，避免误认为按钮能唤起系统保存菜单。
+  shareSave.hidden = inWechat;
+  $("#share-instructions").textContent = inWechat
+    ? "长按下方图片，把这份幸福邀请存进相册"
+    : "保存下方邀请图片，把这份幸福邀请寄给朋友";
+  $("#share-save-tip").textContent = inWechat
+    ? "长按图片 · 选择「保存图片」"
+    : "点击「保存邀请图片」，即可下载高清原图";
   $("#share-btn").onclick = () => {
-    renderWechatState();
     openLayer($("#share-guide"), "#share-close");
     $("#share-guide").scrollTop = 0;
-    if (wechatState === "ready") window.wx.showOptionMenu();
   };
   $("#share-close").onclick = () => closeLayer($("#share-guide"));
   $("#share-guide").addEventListener("click", (event) => {
     if (event.target === $("#share-guide")) closeLayer($("#share-guide"));
-  });
-  $("#share-save").addEventListener("click", (event) => {
-    if (inWechat) {
-      event.preventDefault();
-      toast("长按上方邀请卡，选择保存图片后即可转发");
-    }
   });
   // 相册对话框与手势。不监听主页面滚轮，不改变原生页面滚动。
   let photoIndex = 0;

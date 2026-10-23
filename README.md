@@ -20,7 +20,6 @@
 | 音乐路径 | `audio`，默认自动播放；浏览器拦截时首次交互后播放，音乐按钮可暂停或继续 |
 | 示例祝福 | `sampleWishes` |
 | 分享内容 | `share` |
-| 微信签名接口 | `wechat.signatureEndpoint` |
 
 新人姓名、婚期、地点及坐标等个性化信息统一在 `CONFIG` 中配置，本文档不展示具体值。恋爱节点、部分流程时刻仍为设计示例；六张相册为原创插画占位，可替换为自己的婚照。
 
@@ -41,34 +40,20 @@
 - 六图相册、磨砂大图弹窗、左右滑动、弹窗内鼠标滚轮、按钮及方向键切换，Escape 关闭。
 - 祝福输入校验、纯文本安全显示、贴板动画、最多 50 条本机留言持久化。
 - 音频需主动点击开启，淡入淡出、快速切换竞态处理、循环播放且不因页面滚动中断。
-- 微信分享按钮引导右上角菜单发送原生链接卡片，展示标题、摘要与封面预览；支持准备状态、失败重试与备用图片邀请卡。
+- 分享按钮展示高清邀请图片：微信长按保存，其他浏览器下载原图；图片包含婚期、地点与完整请柬二维码。
 
-## 邀请图卡与微信分享
+## 邀请图片与微信分享
 
-默认以**微信原生链接卡片分享**为主。微信中打开请柬，等待“分享已准备好”，点击右上角「···」→「发送给朋友」，接收方看到含标题、摘要和封面的链接卡片，点击进入完整请柬；朋友圈的展示布局由微信决定。直接把网址粘贴到聊天输入框发送，不等同于网页菜单分享。
+点击页面右下角分享按钮，直接展示 1080×1620 高清邀请图片。微信中长按图片选择「保存图片」，再从微信相册选图发送给朋友或发布朋友圈；其他浏览器提供「保存邀请图片」下载按钮。朋友长按图片内的二维码即可打开完整请柬。
 
-分享弹窗展示内容预览，实际卡片布局由微信控制。签名、SDK 加载、授权或设置分享失败时会显示重试入口，不将 `wx.ready` 误判为分享设置成功；请求及各 SDK 阶段均有 12 秒超时。备用的图片邀请卡收在“也可以保存图片邀请卡”中，无需公众号，含完整请柬二维码。
+- `assets/island-invitation-hd.jpg`：完整邀请图片；HTML 内嵌同一文件作为离线及请求失败兜底。
+- `CONFIG.share.poster`：展示和下载的邀请图片路径。
+- `CONFIG.share.link`：图片中二维码指向的公开请柬网址。
+- `CONFIG.share.image`：网页 OG 预览图片，与邀请图片分享功能独立。
 
-- `assets/island-invitation-hd.jpg`：1080×1620 完整邀请图卡，HTML 同时内嵌同一文件的离线兜底版本。
-- `assets/island-share-hd.jpg`：1200×1200 高清分享图，使用当前新人挥手封面，供 OG 与微信分享配置使用。
-- `CONFIG.share.poster`：微信长按使用的同源图片地址。
-- `CONFIG.share.image`、`link` 及 HTML 的 `og:image`、`og:url`、`canonical`：公开的 HTTPS 预览资源与请柬网址。
+当前公众号缺少原生分享接口权限，页面已移除签名请求、微信 JS-SDK、链接卡片预览及诊断提示。图片分享无需公众号权限。历史签名服务源码保留在 `deploy/wechat-signature/`，当前页面不调用该服务。
 
-更换姓名、婚期或线上网址时，在可解析 `playwright` 和 `sharp` 的 Node.js 环境运行 `node scripts/build-share-assets.cjs`。脚本使用本机 Chrome、macOS Swift/Core Image 与 Vision，读取当前 `CONFIG` 和 `assets/island-cover-hd.png`，重新导出两张图片、验证二维码，并同步静态 OG 与 HTML 内嵌邀请卡；可通过 `CHROME_PATH` 指定 Chrome 路径。发布时需同时上传新图、HTML、CSS 和 JS。新素材使用 `-hd` 文件名，避免沿用旧图片地址的缓存。
-
-### 微信公众号签名服务
-
-固定公网 IP 服务器 + 宝塔的可上传 PHP 接口与操作步骤见 [微信签名服务部署说明](deploy/wechat-signature/README.md)。
-
-前端已配置 `https://wxapi.xxcfun.cn/wechat-signature.php` 并接入微信 JS-SDK。正式生效仍依赖签名服务可访问，以及公众号已授权请柬域名；静态 OG 元信息不能替代该授权。部署时检查：
-
-1. 在有相应 JS-SDK 权限的公众号中配置网站的 JS 接口安全域名。
-2. 设置 `CONFIG.wechat.signatureEndpoint`。服务端按接收的 `url`（包含 query、不含 hash）生成签名，返回 `appId`、`timestamp`、`nonceStr`、`signature`；公众号密钥仅放在服务端。
-3. 页面在微信且填写接口时加载官方 SDK，为好友、朋友圈设置标题、摘要、链接和封面。原生卡片的标题字体与实际展示布局由微信控制。
-
-微信网页无法通过普通按钮强制弹出原生分享菜单，原生链接分享仍通过微信右上角“···”完成。签名服务及真实分享效果需在正式域名、授权账号和实机上联调。
-
-参考：[微信 JS-SDK 官方文档](https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/JS-SDK.html)、[高德 App Scheme 入门指南](https://developer.amap.com/api/amap-mobile/gettingstarted)。
+更换姓名、婚期或线上网址时，在可解析 `playwright` 和 `sharp` 的 Node.js 环境运行 `node scripts/build-share-assets.cjs`。脚本使用本机 Chrome、macOS Swift/Core Image 与 Vision，读取当前 `CONFIG` 和 `assets/island-cover-hd.png`，重新导出图片、验证二维码，并同步静态 OG 与 HTML 内嵌邀请图片；可通过 `CHROME_PATH` 指定 Chrome 路径。发布时一并上传新图片、HTML、CSS 和 JS。
 
 ## 地图与留言说明
 
@@ -105,18 +90,12 @@
 
 - 当前首屏：`assets/island-cover-hd.webp`（1254×1254、WebP quality 96）；无损原图为 `assets/island-cover-hd.png`。单张完整场景由 `hero-motion.js` 做局部连续形变，不再使用每帧仅 443px 的八帧图。
 - 首屏动效与素材生成说明：`assets/hero-motion-notes.md`。
-- 高清 OG / 微信分享图：`assets/island-share-hd.jpg`。
+- 网页 OG 预览图：`assets/island-share-hd.jpg`。
 - 可转发的高清邀请图卡：`assets/island-invitation-hd.jpg`，同一文件已内嵌为离线兜底。
 - 旧无人岛插画、旧分享图与旧邀请卡保留为历史素材，当前分享功能不再引用。
 - 素材来源及最终生成提示词：`assets/README.md`。
 - 视觉规范：`DESIGN.md`。
 
-## 微信分享前端检查
+## 图片分享前端检查
 
-在可解析 `playwright` 的 Node.js 环境运行 `node scripts/check-wechat-share.cjs`（可通过 `CHROME_PATH` 指定 Chrome）。模拟签名和微信 SDK，覆盖好友/朋友圈内容、带查询参数 URL 的签名、签名失败重试、无效响应、SDK 加载失败、授权失败、分享 API 失败、超时、非微信浏览器、弹窗关闭与备用图片。此检查不替代正式域名的微信实机验收。
-
-### 分享失败排查
-
-排查时使用 `https://wedding.xxcfun.cn/?wechat_debug=1`，在微信打开后点击页面分享按钮，查看“微信分享检查结果”。仅该参数开启诊断，普通访问不显示；诊断保留签名服务错误码及 SDK 原始 `errMsg`，不包含 AppSecret、access_token、jsapi_ticket 或签名值。`config:invalid signature` 需要核对当前 URL 的签名，`permission denied` 需要核对公众号接口权限和 JS 接口安全域名。两个分享接口成功只能证明分享内容已设置，仍需在目标微信客户端从网页右上角菜单验证实际卡片。
-
-排查代码已使用官方 `jweixin-1.6.0.js` 配合模拟微信桥接验证。可设置 `WECHAT_SDK_PATH=/absolute/path/jweixin-1.6.0.js` 运行 `node scripts/check-wechat-share.cjs`，额外验证官方 SDK 对签名无效和权限不足的回调处理；这仍不代表真实公众号已获授权。
+在可解析 `playwright` 的 Node.js 环境运行 `node scripts/check-share.cjs`（可通过 `CHROME_PATH` 指定 Chrome）。覆盖微信和普通浏览器文案、原图下载、图片请求失败的内嵌兜底、离线打开、键盘关闭、焦点恢复和多尺寸布局，并确认不再请求微信 SDK 或签名接口。微信原生长按保存菜单仍以手机实机验证为准。

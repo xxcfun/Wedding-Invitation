@@ -733,7 +733,7 @@
         type="button"
         id="share-btn"
         class="tool share-tool press"
-        aria-label="分享婚礼请柬"
+        aria-label="分享婚礼邀请图片"
       >
         <svg class="icon" aria-hidden="true"><use href="#i-share" /></svg>
       </button>
@@ -816,7 +816,7 @@
         </button>
       </div>
     </div>
-    <!-- 微信原生链接分享为主，邀请图片作为备用分享方式。 -->
+    <!-- 图片邀请分享：长按保存原图，再通过微信相册发送。 -->
     <div
       id="share-guide"
       class="lightbox share-dialog"
@@ -834,23 +834,12 @@
         >
           <svg class="icon" aria-hidden="true"><use href="#i-close" /></svg>
         </button>
-        <div class="eyebrow">把幸福寄给远方的你</div>
-        <h2 id="share-guide-title">给你一封婚礼来信</h2>
+        <div class="eyebrow">小岛来信 · 邀你赴约</div>
+        <h2 id="share-guide-title">把这份幸福寄给你</h2>
         <p class="share-hint" id="share-instructions">
-          点击微信右上角「···」，选择「发送给朋友」或「分享到朋友圈」
+          长按下方图片，把这份幸福邀请存进相册
         </p>
-        <div class="share-card" aria-label="发送给朋友的分享内容预览">
-          <div class="share-card-copy">
-            <h3 id="share-card-title">刁勇辰与李汝静 · 布吉岛来信</h3>
-            <p id="share-card-description">诚邀您见证我们的幸福时刻</p>
-          </div>
-          <img id="share-card-image" src="assets/island-share-hd.jpg" width="72" height="72" alt="婚礼请柬封面" />
-        </div>
-        <p class="share-secondary">分享内容预览，实际样式由微信展示</p>
-        <p class="share-status" id="share-status" role="status" aria-live="polite"></p>
-        <button id="share-retry" class="btn press" type="button" hidden>重新准备分享</button>
-        <details class="share-poster-option">
-          <summary>也可以保存图片邀请卡</summary>
+        <div class="share-poster-frame">
           <img
             class="share-poster"
             id="share-poster"
@@ -860,15 +849,16 @@
             height="1620"
             alt="布吉岛来信婚礼邀请卡，含新人姓名、婚期、婚宴地点和可打开完整请柬的二维码"
           />
-          <a
-            id="share-save"
-            class="btn press"
-            download="布吉岛来信-邀请卡.jpg"
-            href="#"
-            >保存邀请卡</a
-          >
-          <p class="share-secondary">微信中长按图片保存，再发送给朋友或发布朋友圈。</p>
-        </details>
+        </div>
+        <p class="share-save-tip" id="share-save-tip">长按图片 · 选择「保存图片」</p>
+        <a
+          id="share-save"
+          class="btn press"
+          download="布吉岛来信-邀请图片.jpg"
+          href="#"
+        >保存邀请图片</a>
+        <p class="share-secondary">保存后，在微信相册中选图发送给朋友或发布朋友圈</p>
+        <p class="share-qr-note">朋友长按图中二维码，就能打开完整请柬</p>
       </div>
     </div>
     <script src="hero-motion.js"></script>
