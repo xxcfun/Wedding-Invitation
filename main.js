@@ -505,68 +505,135 @@ const CONFIG = {
     audio.preload = "auto";
     setMusic(true, true);
   }
-  // 微信 JS-SDK 仅在微信且签名接口已填写时加载。官方网页 API 不能由任意按钮直接强制弹出原生分享菜单，使用右上角原生菜单并配置好友/朋友圈卡片。
-  let wxReady = false;
+  // 签名使用实际进入页面的 URL，保留 query 和编码，仅去掉 hash。
   const inWechat = /MicroMessenger/i.test(navigator.userAgent);
+  const wechatEntryURL = location.href.split("#")[0];
   const shareData = {
     title: CONFIG.share.title,
     desc: CONFIG.share.description,
-    link: CONFIG.share.link || location.href.split("#")[0],
-    imgUrl: CONFIG.share.image,
+    link: new URL(CONFIG.share.link || wechatEntryURL, location.href).href,
+    imgUrl: new URL(CONFIG.share.image, location.href).href,
   };
-  if (CONFIG.share.image) {
-    document.querySelector('meta[property="og:image"]').content =
-      CONFIG.share.image;
+  let wechatState = inWechat ? "loading" : "browser";
+  let wechatTask = null;
+  let sdkTask = null;
+  let wechatAttempt = 0;
+  const shareStatus = $("#share-status");
+  const shareRetry = $("#share-retry");
+  $("#share-card-title").textContent = shareData.title;
+  $("#share-card-description").textContent = shareData.desc;
+  $("#share-card-image").src = shareData.imgUrl;
+  for (const [property, content] of Object.entries({
+    "og:title": shareData.title, "og:description": shareData.desc,
+    "og:url": shareData.link, "og:image": shareData.imgUrl,
+    "og:image:secure_url": shareData.imgUrl,
+  })) {
+    const meta = document.querySelector(`meta[property="${property}"]`);
+    if (meta) meta.content = content;
   }
-  async function configureWechat() {
-    if (!inWechat || !CONFIG.wechat.signatureEndpoint) return;
-    try {
-      const signatureURL = new URL(
-        CONFIG.wechat.signatureEndpoint,
-        location.href,
-      );
-      signatureURL.searchParams.set("url", location.href.split("#")[0]);
-      const response = await fetch(signatureURL);
-      if (!response.ok) throw Error("signature");
-      const data = await response.json();
-      if (!data.appId || !data.timestamp || !data.nonceStr || !data.signature)
-        throw Error("signature");
-      await new Promise((resolve, reject) => {
-        const script = el("script");
-        script.src = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.append(script);
-      });
-      wx.config({
-        debug: false,
-        appId: data.appId,
-        timestamp: data.timestamp,
-        nonceStr: data.nonceStr,
-        signature: data.signature,
-        jsApiList: [
-          "updateAppMessageShareData",
-          "updateTimelineShareData",
-          "showOptionMenu",
-        ],
-      });
-      wx.ready(() => {
-        wx.updateAppMessageShareData(shareData);
-        wx.updateTimelineShareData({
-          title: shareData.title,
-          link: shareData.link,
-          imgUrl: shareData.imgUrl,
+  function renderWechatState() {
+    $("#share-instructions").textContent = inWechat
+      ? "点击微信右上角「···」，选择「发送给朋友」或「分享到朋友圈」"
+      : "请先在微信中打开请柬，再通过右上角「···」分享";
+    const messages = {
+      browser: "微信中打开后，可分享带标题和封面的请柬链接。",
+      loading: "正在准备微信分享…",
+      ready: "分享已准备好，发送给朋友即可打开完整请柬。",
+      error: "微信分享暂未准备好，请重试；也可以保存下方邀请卡。",
+    };
+    shareStatus.textContent = messages[wechatState];
+    shareStatus.setAttribute("aria-busy", String(wechatState === "loading"));
+    shareRetry.hidden = wechatState !== "error";
+  }
+  function withShareTimeout(promise, label) {
+    let timer;
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(Error(label)), 12000);
+      }),
+    ]).finally(() => clearTimeout(timer));
+  }
+  function loadWechatSDK() {
+    if (window.wx) return Promise.resolve();
+    if (sdkTask) return sdkTask;
+    const script = el("script");
+    script.src = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
+    script.async = true;
+    sdkTask = withShareTimeout(new Promise((resolve, reject) => {
+      script.onload = () => window.wx ? resolve() : reject(Error("sdk_missing"));
+      script.onerror = () => reject(Error("sdk_load"));
+      document.head.append(script);
+    }), "sdk_timeout").catch((error) => {
+      script.remove();
+      sdkTask = null;
+      throw error;
+    });
+    return sdkTask;
+  }
+  function configureWechat() {
+    if (!inWechat || wechatState === "ready") return Promise.resolve();
+    if (wechatTask) return wechatTask;
+    const attempt = ++wechatAttempt;
+    wechatState = "loading";
+    renderWechatState();
+    wechatTask = (async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        if (!CONFIG.wechat.signatureEndpoint) throw Error("signature_endpoint_missing");
+        const signatureURL = new URL(CONFIG.wechat.signatureEndpoint, location.href);
+        signatureURL.searchParams.set("url", wechatEntryURL);
+        const response = await fetch(signatureURL, {
+          signal: controller.signal, cache: "no-store", credentials: "omit",
         });
+        if (!response.ok) throw Error("signature_http_" + response.status);
+        const data = await response.json();
+        if (!data.appId || !data.timestamp || !data.nonceStr || !data.signature)
+          throw Error("signature_invalid");
+        clearTimeout(timer);
+        await loadWechatSDK();
+        const wx = window.wx;
+        await withShareTimeout(new Promise((resolve, reject) => {
+          wx.ready(resolve);
+          wx.error(() => {
+            if (attempt === wechatAttempt) {
+              wechatState = "error";
+              renderWechatState();
+            }
+            reject(Error("wx_config"));
+          });
+          wx.config({
+            debug: false,
+            appId: data.appId, timestamp: data.timestamp,
+            nonceStr: data.nonceStr, signature: data.signature,
+            jsApiList: ["updateAppMessageShareData", "updateTimelineShareData", "showOptionMenu"],
+          });
+        }), "wx_config_timeout");
+        // wx.ready 仅代表授权完成；两个分享接口均确认成功才显示就绪。
+        const setShare = (method, value) => withShareTimeout(new Promise((resolve, reject) => {
+          wx[method]({ ...value, success: resolve, fail: () => reject(Error(method)) });
+        }), "wx_share_timeout");
+        await Promise.all([
+          setShare("updateAppMessageShareData", shareData),
+          setShare("updateTimelineShareData", {
+            title: shareData.title, link: shareData.link, imgUrl: shareData.imgUrl,
+          }),
+        ]);
         wx.showOptionMenu();
-        wxReady = true;
-      });
-      wx.error(() => {
-        wxReady = false;
-      });
-    } catch {
-      wxReady = false;
-    }
+        wechatState = "ready";
+      } catch (error) {
+        wechatState = "error";
+        console.warn("[wechat-share]", error.name === "AbortError" ? "signature_timeout" : error.message);
+      } finally {
+        clearTimeout(timer);
+        renderWechatState();
+      }
+    })().finally(() => { wechatTask = null; });
+    return wechatTask;
   }
+  shareRetry.onclick = () => configureWechat();
+  renderWechatState();
   configureWechat();
   const sharePoster = $("#share-poster");
   const embeddedPoster = sharePoster.getAttribute("src");
@@ -583,15 +650,10 @@ const CONFIG = {
     sharePoster.src = new URL(CONFIG.share.poster, location.href).href;
   }
   $("#share-btn").onclick = () => {
-    $("#share-instructions").textContent = inWechat
-      ? "长按邀请卡保存，发送给朋友或分享到朋友圈"
-      : "保存邀请卡后，在微信中发送给朋友或分享到朋友圈";
-    $("#share-link-note").textContent = wxReady
-      ? "也可通过微信右上角菜单发送图文链接卡片"
-      : "也可通过微信右上角菜单分享请柬链接";
+    renderWechatState();
     openLayer($("#share-guide"), "#share-close");
     $("#share-guide").scrollTop = 0;
-    if (wxReady) wx.showOptionMenu();
+    if (wechatState === "ready") window.wx.showOptionMenu();
   };
   $("#share-close").onclick = () => closeLayer($("#share-guide"));
   $("#share-guide").addEventListener("click", (event) => {
