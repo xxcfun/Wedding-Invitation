@@ -90,7 +90,7 @@ const CONFIG = {
     },
   ],
   share: {
-    title: "刁勇辰与李汝静 · 布吉岛来信",
+    title: "叮～有一封布吉岛来信📩",
     description:
       "2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
     image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；用于网页预览元信息
@@ -206,7 +206,7 @@ const CONFIG = {
             ? dateWeek
             : dateWeek + " 开始"),
   );
-  document.title = `${CONFIG.groom}与${CONFIG.bride} · 布吉岛来信`;
+  document.title = CONFIG.share.title;
   const storyMap = $("#story-map");
   CONFIG.story.forEach((s, i) => {
     const stop = el("div", "story-stop reveal");
