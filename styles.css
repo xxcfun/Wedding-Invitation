@@ -2163,7 +2163,12 @@ body::before {
   background: linear-gradient(#dceff7, #e1f0ed);
   z-index: 100;
   transition: opacity 0.7s;
+  /* 脚本缺失或执行失败时，遮罩也会自行退出。 */
+  animation: loader-timeout 0s 5s forwards;
   pointer-events: none;
+}
+@keyframes loader-timeout {
+  to { visibility: hidden; opacity: 0; }
 }
 .loader.hidden-loader {
   opacity: 0;
@@ -2480,6 +2485,9 @@ body::before {
     transition: none !important;
   }
   .particle {
+    display: none;
+  }
+  .loader {
     display: none;
   }
   .motion-ready .reveal {
