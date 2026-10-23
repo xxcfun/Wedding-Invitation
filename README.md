@@ -17,7 +17,7 @@
 | 恋爱故事 | `story` |
 | 婚礼流程 | `agenda` |
 | 六张婚照 | `photos` 各项的 `src` 与 `title` |
-| 音乐路径 | `audio`，默认空，不含任何音频 |
+| 音乐路径 | `audio`，默认自动播放；浏览器拦截时首次交互后播放，音乐按钮可暂停或继续 |
 | 示例祝福 | `sampleWishes` |
 | 分享内容 | `share` |
 | 微信签名接口 | `wechat.signatureEndpoint` |

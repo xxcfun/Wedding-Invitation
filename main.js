@@ -15,7 +15,7 @@ const CONFIG = {
   address: "山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）", // 可修改：完整地址
   longitude: 118.457025,
   latitude: 36.694075, // 可修改：经纬度；本示例按 GCJ-02 处理，高德/苹果使用该值，百度转换 BD-09
-  audio: "assets/island-bgm.mp3", // 背景音乐：Nintendo Sound Team - Welcome Horizons；点击音乐按钮播放
+  audio: "assets/island-bgm.mp3", // 背景音乐：默认自动播放，受浏览器限制时在首次交互后播放
   // 可修改：旅行节点标题、短句与图标；本区域不展示日期。
   story: [
     {
@@ -300,9 +300,9 @@ const CONFIG = {
     btn.addEventListener("click", () => openPhoto(i));
     $("#photo-grid").append(btn);
   });
-  // 地图图片仅复制详细地址，供访客自行粘贴到高德地图中搜索。
+  // 地图图片复制完整场地名称，与导航目的地保持一致，供访客粘贴到高德地图中搜索。
   $("[data-copy-address]").addEventListener("click", async () => {
-    const address = CONFIG.address;
+    const address = CONFIG.venueFull;
     let copied = false;
     try {
       await navigator.clipboard.writeText(address);
@@ -327,14 +327,14 @@ const CONFIG = {
       }
     }
     if (copied) {
-      toast("详细地址已复制，可粘贴到高德地图中搜索");
+      toast("场地名称已复制，可粘贴到高德地图中搜索");
     } else {
-      window.prompt("自动复制未成功，请长按或选中下方详细地址复制：", address);
+      window.prompt("自动复制未成功，请长按或选中下方场地名称复制：", address);
     }
   });
   // 婚礼信息中的导航按钮通过高德官方 App Scheme 直接导航。
   const { longitude: lng, latitude: lat } = CONFIG;
-  const name = encodeURIComponent(CONFIG.venue);
+  const name = encodeURIComponent(CONFIG.venueFull);
   const isiOS =
     /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
@@ -424,7 +424,6 @@ const CONFIG = {
     volumeFrame = requestAnimationFrame(frame);
   }
   let autoMusicPending = false;
-  let invitationMusicHandled = false;
   function clearAutoMusic() {
     autoMusicPending = false;
     document.removeEventListener("click", retryAutoMusic);
@@ -488,22 +487,9 @@ const CONFIG = {
     }
   }
   musicBtn.addEventListener("click", () => {
-    invitationMusicHandled = true;
     clearAutoMusic();
     setMusic(!musicWanted);
   });
-  // 在跳转正文的点击手势中直接播放，避免定时播放被浏览器拦截。
-  if (CONFIG.audio) {
-    audio.preload = "auto";
-    $$('a[href="#invitation"]').forEach((link) => {
-      link.addEventListener("click", () => {
-        if (invitationMusicHandled) return;
-        invitationMusicHandled = true;
-        clearAutoMusic();
-        if (!musicWanted) setMusic(true, true);
-      });
-    });
-  }
   audio.addEventListener("error", () => {
     clearAutoMusic();
     ++musicVersion;
@@ -514,6 +500,11 @@ const CONFIG = {
     musicBtn.removeAttribute("aria-busy");
     toast("音乐暂时无法播放，请检查音频文件");
   });
+  // 打开页面即尝试播放；浏览器拦截时，等待首次交互或微信桥接就绪后重试。
+  if (CONFIG.audio) {
+    audio.preload = "auto";
+    setMusic(true, true);
+  }
   // 微信 JS-SDK 仅在微信且签名接口已填写时加载。官方网页 API 不能由任意按钮直接强制弹出原生分享菜单，使用右上角原生菜单并配置好友/朋友圈卡片。
   let wxReady = false;
   const inWechat = /MicroMessenger/i.test(navigator.userAgent);

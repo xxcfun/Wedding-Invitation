@@ -479,7 +479,7 @@
             <a
               class="btn press"
               data-navigate
-              href="androidamap://navi?sourceApplication=bujiWedding&amp;poiname=%E6%B5%B7%E5%B2%B1%E7%A6%A7%E5%90%88%E9%85%92%E5%BA%97&amp;lat=36.694075&amp;lon=118.457025&amp;dev=0&amp;style=2"
+              href="androidamap://navi?sourceApplication=bujiWedding&amp;poiname=%E6%B5%B7%E5%B2%B1%E7%A6%A7%E5%90%88%E5%A9%9A%E7%A4%BC%E8%89%BA%E6%9C%AF%E4%B8%AD%E5%BF%83&amp;lat=36.694075&amp;lon=118.457025&amp;dev=0&amp;style=2"
             >
               <svg class="icon mini" aria-hidden="true">
                 <use href="#i-compass" /></svg
@@ -506,7 +506,7 @@
           type="button"
           class="map-frame wood press reveal"
           data-copy-address
-          aria-label="复制海岱禧合酒店详细地址"
+          aria-label="复制海岱禧合婚礼艺术中心"
         >
           <img
             id="location-map"
@@ -517,7 +517,7 @@
           /><span class="map-caption"
             ><svg class="icon mini" aria-hidden="true">
               <use href="#i-pin" /></svg
-            >点击图片 · 复制详细地址</span
+            >点击图片 · 复制场地名称</span
           >
         </button>
         <p class="location-address" data-bind="address">
@@ -710,8 +710,8 @@
     <div class="particles" aria-hidden="true">
       <div class="particle-wrap" id="particles"></div>
     </div>
-    <!-- 音频文件路径在 CONFIG.audio 中配置；点击跳转请柬正文时播放，音乐按钮可暂停或继续。 -->
-    <audio id="bgm" loop muted preload="none" playsinline></audio>
+    <!-- 默认尝试播放背景音乐；浏览器拦截时首次交互后播放，音乐按钮可暂停或继续。 -->
+    <audio id="bgm" loop muted preload="auto" playsinline></audio>
     <div class="tool-group" aria-label="小岛工具">
       <button
         type="button"
