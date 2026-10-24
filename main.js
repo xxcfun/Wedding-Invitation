@@ -19,7 +19,7 @@ const CONFIG = {
     // 此接口为当前网页生成 JS-SDK 签名；AppID 由接口返回，无需在前端重复填写。
     signatureEndpoint: "https://wxapi.xxcfun.cn/wechat-signature.php", // 仅公开签名接口；公众号密钥保留在服务器
   },
-  audio: "assets/island-bgm.mp3", // 背景音乐：默认自动播放，受浏览器限制时在首次交互后播放
+  audio: "assets/island-bgm-lite.mp3", // 背景音乐：默认自动播放，受浏览器限制时在首次交互后播放
   // 可修改：旅行节点标题、短句与图标；本区域不展示日期。
   story: [
     {
@@ -651,13 +651,10 @@ const CONFIG = {
     musicBtn.removeAttribute("aria-busy");
     toast("音乐暂时无法播放，请检查音频文件");
   });
-  // 先把带宽让给封面；用户主动点音乐按钮时仍立即播放，避免延迟任务覆盖手动暂停意图。
+  // 自动音乐等待封面完成解码；慢网不设超时抢占带宽，主动点击仍立即响应。
   if (CONFIG.audio) {
     const initialMusicVersion = musicVersion;
-    Promise.race([
-      $("#hero-image").decode().catch(() => {}),
-      new Promise((resolve) => setTimeout(resolve, 3000)),
-    ]).then(() => {
+    $("#hero-image").decode().catch(() => {}).then(() => {
       if (musicVersion === initialMusicVersion) setMusic(true, true);
     });
   }

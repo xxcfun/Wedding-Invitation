@@ -41,7 +41,7 @@ const server = http.createServer((req, res) => {
       if (mode === 'stalled-css') await page.route('**/styles.css', async route => { await stalled; await route.continue(); });
       if (mode === 'stalled-scripts') await page.route('**/*.js', async route => { await stalled; await route.abort(); });
       // 慢网封面未返回时，文字应先显示，音乐不应抢占最初的下载带宽。
-      if (mode === 'stalled-hero') await page.route('**/assets/island-cover-hd.webp', async route => { await stalled; await route.abort(); });
+      if (mode === 'stalled-hero') await page.route('**/assets/island-cover*.webp', async route => { await stalled; await route.abort(); });
       // 减少动效场景同时阻断脚本，用于验证纯 CSS 的降级展示，不只是 JS 开关。
       if (mode === 'scripts-failed' || mode === 'reduced-motion') await page.route('**/*.js', route => route.abort());
       try {

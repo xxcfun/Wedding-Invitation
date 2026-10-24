@@ -117,3 +117,11 @@
 微信打开整个请柬就显示“网络出错”，刷新几次可恢复时，需与地图签名错误区分：主页面来自 Vercel，尚未加载网页的失败无法由页面 JavaScript 自动修复。应在故障手机上分别测试 Wi-Fi、移动流量及系统浏览器，核对 DNS、TLS 与托管线路。Vercel 官方说明大陆访问可能出现连接或性能下降：[官方说明](https://vercel.com/kb/guide/accessing-vercel-hosted-sites-from-mainland-china)。如长期面向大陆宾客，需选择线路合适的托管或镜像，再保持 `wedding.xxcfun.cn`、公众号安全域名和签名 URL 一致。
 
 另于同日检查签名域名 `wxapi.xxcfun.cn`：HTTPS 握手被重置；HTTP 403 返回 `Non-compliance ICP Filing` 的阿里云备案拦截页。这是独立的服务端接入故障，不能通过前端重试解决。需在云服务商核对备案/接入状态，或将签名服务迁至可正常提供 HTTPS 的主机。修复后应按 `deploy/wechat-signature/README.md` 的带 Origin 请求验证 JSON，再做手机微信地图联调。
+
+## 2026-10-24 首屏资源减重
+
+- 字体改为 `unicode-range` 分包：`island-round-0.woff2` 包含当前固定文案字符，约 103 KB；其余字符分为 24 个包，按实际显示字符加载。全部 7053 个字符仍保留，留言和姓名不会因分包缺字。原始 TTF 与完整 WOFF2 保留作为生成源和存档，不再默认下载整套字库。
+- 封面通过 `srcset` 和匹配的 preload 提供 960px / 1254px 两档；960px WebP 约 156 KB，高像素密度设备仍可选高清原图。静图与 WebGL 使用浏览器选中的同一图片。
+- 音乐改用 96 kbps MP3 `island-bgm-lite.mp3`，约 745 KB；原音乐保留。自动播放只在封面解码完成后尝试，不再在慢网 3 秒后抢带宽；主动点击仍立即响应。
+- 更新文案、字体、封面或原音乐后，运行 `python3 scripts/optimize-assets.py` 重新生成资源（依赖 Pillow、fonttools、brotli、imageio-ffmpeg）。更新文案后重新生成可让新增文字也进入常用字体包。
+- 验证：七种首屏加载场景、7053 字符完整且无重叠覆盖、压缩音频完整解码及 JS 语法检查。体积变化不等同于线上耗时改善，实际效果需部署后在手机微信与移动网络确认。
