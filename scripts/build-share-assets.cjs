@@ -8,21 +8,27 @@ const { execFileSync } = require("node:child_process");
 const { chromium } = require("playwright");
 const sharp = require("sharp");
 
+// 所有输入输出均相对项目根目录解析；可从任意工作目录执行此脚本。
 const root = path.resolve(__dirname, "..");
 const main = fs.readFileSync(path.join(root, "main.js"), "utf8");
 const sandbox = {};
+// 仅执行 CONFIG 所在的前缀，隔离浏览器 DOM 交互逻辑；后面的主 IIFE 不会在 Node 中运行。
 vm.runInNewContext(main.slice(0, main.indexOf("(() => {")) + ";globalThis.config = CONFIG;", sandbox);
 const config = sandbox.config;
+// 二维码、临时 HTML 和 Swift 编译缓存放在独立临时目录，结束后统一清理。
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "wedding-share-"));
 const qrFile = path.join(temp, "qr.png");
 const swiftArgs = ["-module-cache-path", path.join(temp, "swift-cache"),
   path.join(__dirname, "share-qr.swift"), config.share.link, qrFile];
+// 把配置文字写入临时 HTML 属性或正文前进行转义，避免姓名等内容破坏模板。
 const escape = (s) => String(s).replace(/[&<>"']/g, (c) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
 }[c]));
 const assets = path.join(root, "assets");
+// 将图片与字体内嵌到临时 HTML，使渲染不依赖网络请求或外部资源路径。
 const dataURL = (file, mime) => `data:${mime};base64,${fs.readFileSync(file).toString("base64")}`;
 
+// 同时生成方形分享封面和竖版邀请卡；CSS 按固定尺寸排版，截图时再按目标尺寸输出。
 function artwork(qr) {
   const hero = dataURL(path.join(assets, "island-cover-hd.png"), "image/png");
   const font = dataURL(path.join(assets, "island-round.ttf"), "font/ttf");
@@ -71,6 +77,7 @@ function artwork(qr) {
   </section></main></html>`;
 }
 
+// 更新已存在的静态 meta 标签；找不到目标即报错，避免页面改版后悄悄遗漏分享信息。
 function meta(html, attribute, key, value) {
   let found = false;
   const result = html.replace(/<meta\b[^>]*>/g, (tag) => {
@@ -85,13 +92,16 @@ function meta(html, attribute, key, value) {
 (async () => {
   let browser;
   try {
+    // 先用系统 Core Image 生成真实二维码，链接取自 CONFIG.share.link。
     execFileSync("swift", swiftArgs, {stdio:"inherit"});
     const file = path.join(temp, "share-artwork.html");
     fs.writeFileSync(file, artwork(dataURL(qrFile, "image/png")));
     browser = await chromium.launch({headless:true,
       executablePath: process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"});
+    // 使用 2 倍设备像素比截图，提高文字与装饰的栅格化精度。
     const page = await browser.newPage({viewport:{width:740,height:1800},deviceScaleFactor:2});
     await page.goto(pathToFileURL(file).href, {waitUntil:"load"});
+    // 等字体和全部图片解码完成后再截图，避免导出的图片使用临时字体或缺图。
     await page.evaluate(async () => {
       await document.fonts.ready;
       await Promise.all([...document.images].map(image => image.decode()));
@@ -101,10 +111,13 @@ function meta(html, attribute, key, value) {
     const poster = await page.locator("#poster").screenshot();
     const shareFile = path.join(assets, "island-share-hd.jpg");
     const posterFile = path.join(assets, "island-invitation-hd.jpg");
+    // 方形封面输出 1200 像素 JPEG；竖版邀请卡统一调整为 1080×1620。
     await sharp(square).jpeg({quality:88,mozjpeg:true}).toFile(shareFile);
     await sharp(poster).resize(1080,1620).jpeg({quality:94,mozjpeg:true}).toFile(posterFile);
+    // 对最终压缩后的邀请卡重新识别二维码，验证缩放与压缩没有损坏可扫描性。
     execFileSync("swift", [...swiftArgs, posterFile], {stdio:"inherit"});
 
+    // 把配置同步到页面的 OG 信息、canonical 链接和内嵌邀请图，确保线上与离线内容一致。
     const htmlFile = path.join(root, "index.html");
     let html = fs.readFileSync(htmlFile, "utf8");
     for (const [attribute,key,value] of [
@@ -120,12 +133,14 @@ function meta(html, attribute, key, value) {
       ["property","og:image:alt","布吉岛来信：新人在海岛花拱下牵手，新郎挥手、新娘手捧鲜花，下方为新人姓名与婚期"],
     ]) html = meta(html, attribute, key, value);
     html = html.replace(/(<link\s+rel="canonical"\s+href=")[^"]*("\s*\/>)/, `$1${escape(config.share.link)}$2`);
+    // 只定位 share-poster 图片标签替换内嵌数据及尺寸，不触碰其他页面插图。
     html = html.replace(/<img\b[^>]*\bid="share-poster"[^>]*>/, tag => tag
       .replace(/src="[^"]*"/, `src="${dataURL(posterFile, "image/jpeg")}"`)
       .replace(/width="[^"]*"/, 'width="1080"')
       .replace(/height="[^"]*"/, 'height="1620"'));
     fs.writeFileSync(htmlFile, html);
     console.log(JSON.stringify({source:"assets/island-cover-hd.png",share:await sharp(shareFile).metadata(),poster:await sharp(posterFile).metadata()},null,2));
+  // 即使浏览器截图、图片导出或二维码验证失败，也关闭浏览器并移除本次临时目录。
   } finally {
     await browser?.close();
     fs.rmSync(temp,{recursive:true,force:true});

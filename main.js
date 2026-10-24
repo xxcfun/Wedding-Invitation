@@ -15,6 +15,10 @@ const CONFIG = {
   address: "山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）", // 可修改：完整地址
   longitude: 118.457025,
   latitude: 36.694075, // 可修改：经纬度；本示例按 GCJ-02 处理，高德/苹果使用该值，百度转换 BD-09
+  wechat: {
+    // 此接口为当前网页生成 JS-SDK 签名；AppID 由接口返回，无需在前端重复填写。
+    signatureEndpoint: "https://wxapi.xxcfun.cn/wechat-signature.php", // 仅公开签名接口；公众号密钥保留在服务器
+  },
   audio: "assets/island-bgm.mp3", // 背景音乐：默认自动播放，受浏览器限制时在首次交互后播放
   // 可修改：旅行节点标题、短句与图标；本区域不展示日期。
   story: [
@@ -103,8 +107,10 @@ const CONFIG = {
 ===================================================================== */
 (() => {
   "use strict";
+  // DOM 查询约定：$ 取单个节点，$$ 转成数组，便于统一使用数组遍历方法。
   const $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
+  // 统一封装本机存储：隐私模式、配额不足或旧数据格式错误时，页面仍能继续工作。
   const storage = {
     get(key, fallback) {
       try {
@@ -122,6 +128,7 @@ const CONFIG = {
       }
     },
   };
+  // 从 index.html 的 SVG symbol 图标库引用图案；使用 SVG 命名空间创建节点。
   const icon = (name, cls = "icon") => {
     const el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     el.setAttribute("class", cls);
@@ -131,26 +138,31 @@ const CONFIG = {
     el.append(use);
     return el;
   };
+  // 动态文本统一写入 textContent；访客留言等输入不会被解析为 HTML。
   const el = (tag, cls, text) => {
     const n = document.createElement(tag);
     if (cls) n.className = cls;
     if (text !== undefined) n.textContent = text;
     return n;
   };
+  // 同时识别手机 UA 和使用桌面 UA 的触屏 iPad，供导航入口选择使用。
   const isMobile = () =>
     /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
     (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  // 动效总开关由系统偏好与页面手动暂停共同决定，任一要求暂停即停止装饰动画。
   const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
   let reduced = motionQuery.matches,
     manualPause = false;
   const motionPaused = () => reduced || manualPause;
   let toastTimer;
+  // 复用同一个短提示节点；新提示会重置隐藏计时，避免旧计时提前关闭新消息。
   function toast(text) {
     $("#toast").textContent = text;
     $("#toast").classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => $("#toast").classList.remove("show"), 3400);
   }
+  // 将配置婚期解析为绝对时间；显示部分强制使用北京时间，不随访客设备时区变化。
   const weddingDate = new Date(CONFIG.date),
     validDate = Number.isFinite(weddingDate.getTime());
   const parts = validDate
@@ -166,6 +178,7 @@ const CONFIG = {
       }).formatToParts(weddingDate)
     : [];
   const part = (t) => parts.find((p) => p.type === t)?.value || "";
+  // 今日播报使用打开页面时的北京时间，与下方婚礼日期分别计算。
   const todayParts = new Intl.DateTimeFormat("zh-CN", {
     timeZone: "Asia/Shanghai",
     year: "numeric",
@@ -194,9 +207,11 @@ const CONFIG = {
     n.textContent = CONFIG.lunarDate ? `农历${CONFIG.lunarDate}` : "";
     n.hidden = !CONFIG.lunarDate;
   });
+  // HTML 的 data-bind 值对应 CONFIG 的字段名；集中填充姓名、酒店、地址等重复内容。
   $$("[data-bind]").forEach(
     (n) => (n.textContent = CONFIG[n.dataset.bind] || ""),
   );
+  // 同一婚期按 data-date 选择短日期、星期时间或带“开始”的完整文案。
   $$("[data-date]").forEach(
     (n) =>
       (n.textContent =
@@ -207,6 +222,7 @@ const CONFIG = {
             : dateWeek + " 开始"),
   );
   document.title = CONFIG.share.title;
+  // 根据 CONFIG.story 生成旅行节点，data-step 交由 CSS 控制岛屿位置与路线布局。
   const storyMap = $("#story-map");
   CONFIG.story.forEach((s, i) => {
     const stop = el("div", "story-stop reveal");
@@ -222,6 +238,7 @@ const CONFIG = {
     );
     storyMap.append(stop);
   });
+  // 按配置顺序创建婚礼流程；逐项设置延迟，让滚动入场形成轻微错落。
   CONFIG.agenda.forEach((s, i) => {
     const task = el("li", "task reveal");
     task.style.setProperty("--delay", i * 45 + "ms");
@@ -233,6 +250,7 @@ const CONFIG = {
     $("#task-list").append(task);
   });
   // 原创静态位置示意图，仅用于装饰和地标阅读，不宣称为精确街区比例。
+  // 将动态酒店名插入 SVG 字符串前转义 XML 特殊字符，避免破坏图片结构。
   const escapeXML = (s) =>
     String(s).replace(
       /[&<>"']/g,
@@ -246,6 +264,7 @@ const CONFIG = {
         })[c],
     );
   const mapSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 370"><defs><pattern id="wave" width="40" height="25" patternUnits="userSpaceOnUse"><path d="M0 13q10-6 20 0t20 0" fill="none" stroke="#fff" opacity=".25"/></pattern><pattern id="grass" width="32" height="30" patternUnits="userSpaceOnUse"><path d="m5 8 3-5 3 5m12 17 3-5 3 5" fill="none" stroke="#9bbd7e" opacity=".3"/><circle cx="16" cy="17" r="1" fill="#faf5d5"/></pattern><filter id="sh"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#758f5a" flood-opacity=".22"/></filter></defs><rect width="440" height="370" fill="#b9ddcf"/><rect width="440" height="370" fill="url(#wave)"/><path d="M-10 50Q45 20 85 42T187 21 304 35 445 20V322Q370 339 320 321T210 341 106 320 0 337Z" fill="#ebdeb2"/><path d="M-10 39Q45 9 85 31T187 10 304 24 445 9V305Q370 322 320 304T210 324 106 303 0 320Z" fill="#c7dba0"/><path d="M-10 39Q45 9 85 31T187 10 304 24 445 9V305Q370 322 320 304T210 324 106 303 0 320Z" fill="url(#grass)"/><path d="M220 15V312" stroke="#b4bd94" stroke-width="33"/><path d="M220 15V312" stroke="#fbf3d8" stroke-width="29"/><path d="M-10 207H450" stroke="#b4bd94" stroke-width="45"/><path d="M-10 207H450" stroke="#fbf3d8" stroke-width="41"/><path d="M-10 207H440" stroke="#d8d5b2" stroke-width="2" stroke-dasharray="8 9"/><g fill="#91b57d" filter="url(#sh)"><circle cx="39" cy="85" r="22"/><circle cx="76" cy="55" r="18"/><circle cx="383" cy="48" r="21"/><circle cx="404" cy="92" r="18"/><circle cx="46" cy="267" r="20"/><circle cx="384" cy="280" r="25"/></g><g fill="#d6e3b3"><circle cx="33" cy="78" r="12"/><circle cx="71" cy="50" r="11"/><circle cx="377" cy="41" r="12"/><circle cx="378" cy="273" r="13"/></g><g filter="url(#sh)"><rect x="266" y="104" width="101" height="58" rx="9" fill="#faf0d1"/><path d="m253 108 63-36 64 36Z" fill="#be9471"/><path d="m258 105 58-32 58 32Z" fill="#d6b18b"/><rect x="306" y="131" width="21" height="31" rx="10" fill="#9eb295"/><g fill="#b7cbbc"><rect x="278" y="123" width="14" height="14" rx="3"/><rect x="341" y="123" width="14" height="14" rx="3"/></g></g><path d="M315 160v25" stroke="#fcf5dc" stroke-width="16"/><g filter="url(#sh)"><rect x="98" y="247" width="81" height="37" rx="6" fill="#fff3d1"/><path d="m90 248 49-23 49 23Z" fill="#8faea1"/><g fill="#b3c9b6"><rect x="108" y="257" width="12" height="13" rx="2"/><rect x="133" y="257" width="12" height="13" rx="2"/><rect x="157" y="257" width="12" height="13" rx="2"/></g></g><g font-family="sans-serif" text-anchor="middle" fill="#506344"><text x="138" y="303" font-size="13">西苑小学</text><text x="95" y="212" font-size="13">后 营 子 街</text><text x="316" y="65" font-size="13" font-weight="bold">${escapeXML(CONFIG.venue)}</text><text x="355" y="233" font-size="11">808号</text></g><g transform="translate(306 108)" filter="url(#sh)"><path d="M0 17v-48" stroke="#795f42" stroke-width="3"/><path d="M2-31q15-7 29 0v21q-14-7-29 0" fill="#da8d78"/><path d="m13-24 3 3 3-3" stroke="#fff4d9" fill="none" stroke-width="2"/></g><g transform="translate(33 28)" font-family="sans-serif" text-anchor="middle" fill="#64805e"><text y="0" font-size="11">北</text><path d="m0 8-5 13h10Z" fill="#64805e"/></g><g fill="#fff5de"><circle cx="51" cy="162" r="4"/><circle cx="60" cy="167" r="4"/><circle cx="59" cy="157" r="4"/><circle cx="371" cy="168" r="4"/><circle cx="380" cy="163" r="4"/><circle cx="381" cy="173" r="4"/></g><g fill="#e4bd74"><circle cx="57" cy="162" r="3"/><circle cx="377" cy="168" r="3"/></g><rect x="135" y="339" width="170" height="22" rx="11" fill="#fff9e5" opacity=".85"/><text x="220" y="354" text-anchor="middle" font-size="10" font-family="sans-serif" fill="#66765b">手绘位置示意 · 点击开启导航</text></svg>`;
+  // 把自包含 SVG 转成可赋给 img.src 的 data URL，无需额外请求图片服务。
   const svgURL = (svg) =>
     "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   $("#location-map").src = svgURL(mapSVG);
@@ -258,17 +277,20 @@ const CONFIG = {
     sage: ["#e2e7d2", "#b2c5a1", "#83a37c"],
     cream: ["#f6ebce", "#c4cdac", "#9bad84"],
   };
+  // 根据照片主题生成本地插画占位；未配置图片或加载失败时都使用同一套降级方案。
   function photoPlaceholder(p, i) {
     const c = placeholderPalettes[p.palette] || placeholderPalettes.sea;
     return svgURL(
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480"><defs><linearGradient id="b" x2="0" y2="1"><stop stop-color="${c[0]}"/><stop offset="1" stop-color="#fff6df"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#6c855b" flood-opacity=".17"/></filter></defs><rect width="400" height="480" fill="url(#b)"/><circle cx="300" cy="83" r="30" fill="#fff4c7"/><path d="M-20 311Q80 245 180 293T420 277V480H0Z" fill="${c[1]}"/><path d="M-20 369Q110 308 240 350T420 334V480H0Z" fill="${c[2]}" opacity=".52"/><g fill="#fffbec" opacity=".7"><rect x="33" y="88" width="98" height="17" rx="9"/><circle cx="75" cy="84" r="18"/><circle cx="97" cy="88" r="13"/></g><g filter="url(#s)"><path d="M124 320V213a76 76 0 0 1 152 0v107" fill="none" stroke="#fdf4d6" stroke-width="15"/><path d="M133 319V214a67 67 0 0 1 134 0v105" fill="none" stroke="#d3c5a7" stroke-width="2"/><g fill="#7fa37b"><ellipse cx="136" cy="190" rx="13" ry="27" transform="rotate(-40 136 190)"/><ellipse cx="154" cy="155" rx="13" ry="27" transform="rotate(15 154 155)"/><ellipse cx="257" cy="170" rx="14" ry="27" transform="rotate(40 257 170)"/><ellipse cx="274" cy="210" rx="14" ry="27"/></g><g fill="#fff9e7"><circle cx="144" cy="171" r="16"/><circle cx="180" cy="143" r="14"/><circle cx="242" cy="153" r="16"/><circle cx="271" cy="192" r="12"/></g><g fill="#dfbd80"><circle cx="144" cy="171" r="6"/><circle cx="180" cy="143" r="5"/><circle cx="242" cy="153" r="6"/><circle cx="271" cy="192" r="5"/></g><path d="M175 250c-18-27-51 0-22 24l22 18 23-18c29-24-5-51-23-24Z" fill="#e8ad96" transform="translate(25 -5)"/></g><g fill="#fff9e8"><circle cx="71" cy="350" r="9"/><circle cx="59" cy="359" r="9"/><circle cx="72" cy="368" r="9"/><circle cx="84" cy="358" r="9"/></g><circle cx="72" cy="359" r="7" fill="#e0bd79"/><path d="M290 340q10-40 35-25t-13 35Z" fill="#7d9e74"/><g fill="#fff9e7" opacity=".7"><circle cx="50" cy="420" r="2"/><circle cx="330" cy="393" r="3"/><circle cx="280" cy="430" r="2"/></g><rect x="118" y="402" width="164" height="32" rx="16" fill="#fff8e9bb"/><text x="200" y="423" text-anchor="middle" font-family="sans-serif" font-size="13" letter-spacing="3" fill="#627455">回忆照片 · ${String(i + 1).padStart(2, "0")}</text></svg>`,
     );
   }
+  // 预先规范化照片数据；placeholder 标记同时影响卡片和大图中的无障碍说明。
   const photos = CONFIG.photos.map((p, i) => ({
     ...p,
     src: p.src || photoPlaceholder(p, i),
     placeholder: !p.src,
   }));
+  // 构建懒加载相册卡片，并绑定对应索引；错误处理只触发一次，避免占位图失败时循环赋值。
   photos.forEach((p, i) => {
     const btn = el("button", "photo-card press reveal");
     btn.type = "button";
@@ -329,12 +351,102 @@ const CONFIG = {
       window.prompt("自动复制未成功，请长按或选中下方场地名称复制：", address);
     }
   });
-  // 婚礼信息中的导航按钮通过高德官方 App Scheme 直接导航。
+  // 微信使用内置地图位置页；其他手机浏览器保留高德原生导航。
   const { longitude: lng, latitude: lat } = CONFIG;
   const name = encodeURIComponent(CONFIG.venueFull);
+  const inWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  // 签名必须与当前网页地址一致；保留微信分享附加的查询参数及原始编码，只移除 hash。
+  // 在初始化时保存，避免访客随后点击页内锚点影响本次签名使用的地址。
+  const wechatPageURL = location.href.split("#")[0];
+  // idle：未开始；loading：请求签名或等待 SDK；ready：鉴权完成；error：可点击重试。
+  let wechatMapState = "idle";
+  // 复用正在加载的 SDK，避免多个调用同时插入相同脚本。
+  let wechatSDKPromise;
+  function loadWeChatSDK() {
+    if (window.wx?.config) return Promise.resolve(window.wx);
+    if (wechatSDKPromise) return wechatSDKPromise;
+    wechatSDKPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      // 网络一直没有响应时也要结束等待，让下一次点击有机会重试。
+      const timer = setTimeout(() => finish(new Error("sdk_timeout")), 12000);
+      function finish(error) {
+        clearTimeout(timer);
+        script.onload = script.onerror = null;
+        if (error) {
+          // 清理失败的脚本节点；重试时重新插入官方 SDK。
+          script.remove();
+          reject(error);
+        } else resolve(window.wx);
+      }
+      script.src = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
+      script.async = true;
+      script.onload = () => finish(window.wx?.config ? null : new Error("sdk_missing"));
+      script.onerror = () => finish(new Error("sdk_load_error"));
+      document.head.append(script);
+    }).catch((error) => {
+      // 不缓存失败的 Promise，否则后续调用只会重复收到同一个错误。
+      wechatSDKPromise = null;
+      throw error;
+    });
+    return wechatSDKPromise;
+  }
+  async function prepareWeChatMap() {
+    // 初始化过程中重复点击不再发请求；已经鉴权成功则直接复用。
+    if (wechatMapState === "loading" || wechatMapState === "ready") return;
+    wechatMapState = "loading";
+    try {
+      if (!/^https?:$/.test(location.protocol)) throw new Error("https_required");
+      const endpoint = new URL(CONFIG.wechat.signatureEndpoint);
+      // 用查询参数传完整网页地址，编码交给 URL API；签名计算及公众号密钥均留在服务端。
+      endpoint.searchParams.set("url", wechatPageURL);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      let signature;
+      try {
+        const response = await fetch(endpoint.href, {
+          signal: controller.signal,
+          // 跨域签名服务无需登录 Cookie；每次初始化重新请求，避免复用过期签名。
+          credentials: "omit",
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("signature_request_failed");
+        signature = await response.json();
+      } finally {
+        // 无论成功或失败，都释放请求超时计时器。
+        clearTimeout(timer);
+      }
+      // 先检查必要字段，避免把错误响应当成签名继续提交给微信。
+      if (!signature.appId || !signature.nonceStr || !signature.timestamp || !signature.signature)
+        throw new Error("signature_invalid");
+      const wx = await loadWeChatSDK();
+      await new Promise((resolve, reject) => {
+        // SDK 文件加载成功不等于鉴权成功；必须等微信触发 ready 后才能打开地图。
+        const timer = setTimeout(() => reject(new Error("config_timeout")), 12000);
+        wx.ready(() => { clearTimeout(timer); resolve(); });
+        wx.error(() => { clearTimeout(timer); reject(new Error("config_failed")); });
+        wx.config({
+          debug: false,
+          appId: signature.appId,
+          timestamp: signature.timestamp,
+          nonceStr: signature.nonceStr,
+          signature: signature.signature,
+          // 仅申请查看位置的权限；酒店坐标已知，无需调用 getLocation 获取访客位置。
+          jsApiList: ["openLocation"],
+        });
+      });
+      wechatMapState = "ready";
+    } catch {
+      // 后台初始化失败时不打断阅读；访客点击导航时再显示提示并发起重试。
+      wechatMapState = "error";
+    }
+  }
+  // 提前完成签名和鉴权，让正式点击时可以直接调用地图；其他浏览器不请求微信服务。
+  if (inWeChat && isMobile()) void prepareWeChatMap();
+  // iPad 桌面模式可能使用 Macintosh UA，同时检查触摸能力以识别 iPad。
   const isiOS =
     /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  // 高德的 dev=0 表示传入的已是 GCJ-02 坐标，不再进行 GPS 坐标转换。
   const amapAppURL = `${isiOS ? "iosamap" : "androidamap"}://navi?sourceApplication=bujiWedding&poiname=${name}&lat=${lat}&lon=${lng}&dev=0&style=2`;
   $$("[data-navigate]").forEach((link) => {
     link.href = amapAppURL;
@@ -346,19 +458,49 @@ const CONFIG = {
         toast("请在已安装高德地图的手机上打开请柬进行导航");
         return;
       }
-      if (/MicroMessenger/i.test(navigator.userAgent)) {
-        toast("若未唤起高德，请在右上角选择在浏览器打开后，再点击导航");
+      if (inWeChat) {
+        // 阻止默认的高德 Scheme 跳转，改由微信 SDK 打开位置页。
+        event.preventDefault();
+        if (wechatMapState !== "ready") {
+          const failed = wechatMapState === "error";
+          void prepareWeChatMap();
+          toast(failed
+            ? "地图暂未连接，正在重试；也可点击手绘地图复制酒店名称"
+            : "地图正在准备，请稍后再点一次导航前往");
+          // 不在异步初始化结束后自动打开；让访客再次点击，保留明确的用户操作时机。
+          return;
+        }
+        try {
+          // 此处与点击同步执行：先打开酒店位置页，后续由访客在微信中选择导航。
+          window.wx.openLocation({
+            // 微信位置页同样使用 GCJ-02；latitude 是纬度，longitude 是经度。
+            latitude: lat,
+            longitude: lng,
+            name: CONFIG.venueFull,
+            address: CONFIG.address,
+            // 位置页初始缩放级别和附带的请柬链接。
+            scale: 16,
+            infoUrl: CONFIG.share.link,
+            fail: () => toast("地图打开失败，可点击手绘地图复制酒店名称，或在浏览器打开请柬"),
+          });
+        } catch {
+          // 兼容 SDK 调用同步抛错的情况；异步失败由上面的 fail 回调处理。
+          toast("地图打开失败，可点击手绘地图复制酒店名称，或在浏览器打开请柬");
+        }
       }
-      // 点击直接交给系统唤起高德；没有定时网页兜底，返回请柬也不会突然跳页。
+      // 微信外由原生链接唤起高德；返回请柬后不执行延时跳转。
     });
   });
+  // 弹窗共享状态：记录当前弹窗和打开前的焦点，保证切换弹窗与关闭后键盘导航连续。
   let lastFocus = null,
     activeDialog = null;
+  // 打开新弹窗前关闭旧弹窗，页面同一时刻只维护一个活动对话框。
   function rememberFocus(dialog) {
     if (activeDialog && activeDialog !== dialog) closeActive();
     lastFocus = document.activeElement;
     activeDialog = dialog;
   }
+  // 关闭弹窗后回到触发控件；preventScroll 避免恢复焦点时让长页面突然跳动。
   function restoreFocus() {
     activeDialog = null;
     lastFocus?.focus({ preventScroll: true });
@@ -369,6 +511,7 @@ const CONFIG = {
       $("#count-title").textContent = "婚期，敬请期待";
       return;
     }
+    // 每次根据当前时间重算剩余值，不靠递减计数，避免后台计时器节流造成累计误差。
     const delta = Math.max(0, weddingDate - Date.now()),
       seconds = Math.floor(delta / 1000);
     const values = [
@@ -384,6 +527,7 @@ const CONFIG = {
         n.textContent = value;
         n.classList.remove("tick");
         if (!motionPaused()) {
+          // 强制完成一次布局读取，确保重复添加 tick 类能重新触发数字弹跳动画。
           void n.offsetWidth;
           n.classList.add("tick");
         }
@@ -399,15 +543,18 @@ const CONFIG = {
   // 音频淡入淡出：快速切换时取消上一帧任务，保持最终意图一致。
   const audio = $("#bgm"),
     musicBtn = $("#music-btn");
+  // musicWanted 保存最新播放意图；musicVersion 区分异步 play 请求，防止较早的结果覆盖较新的操作。
   let musicWanted = false,
     musicVersion = 0,
     volumeFrame = 0;
   if (CONFIG.audio) audio.src = CONFIG.audio;
+  // 同步按钮读屏状态和音乐装饰类；播放失败时也统一从这里恢复界面。
   function musicUI(on) {
     document.body.classList.toggle("music-on", on);
     musicBtn.setAttribute("aria-pressed", String(on));
     musicBtn.setAttribute("aria-label", on ? "暂停背景音乐" : "开启背景音乐");
   }
+  // 从当前音量插值到目标值；先取消旧帧，快速开关音乐时不会同时运行两条渐变。
   function fadeVolume(target, ms, done) {
     cancelAnimationFrame(volumeFrame);
     const initial = audio.volume,
@@ -421,6 +568,7 @@ const CONFIG = {
     volumeFrame = requestAnimationFrame(frame);
   }
   let autoMusicPending = false;
+  // 播放成功或用户主动操作后解除自动重试监听，避免后续点击又把已暂停的音乐开启。
   function clearAutoMusic() {
     autoMusicPending = false;
     document.removeEventListener("click", retryAutoMusic);
@@ -428,12 +576,14 @@ const CONFIG = {
     document.removeEventListener("keydown", retryAutoMusic);
     document.removeEventListener("WeixinJSBridgeReady", retryAutoMusic);
   }
+  // 只在等待自动播放授权时重试；音乐按钮保留自身切换逻辑，键盘仅响应确认键。
   function retryAutoMusic(event) {
     if (!autoMusicPending || musicBtn.contains(event.target)) return;
     if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
     clearAutoMusic();
     setMusic(true, true);
   }
+  // 浏览器拒绝自动播放后，等待首次点击、触摸、确认键或微信桥接就绪再尝试。
   function waitForMusicGesture() {
     autoMusicPending = true;
     document.addEventListener("click", retryAutoMusic);
@@ -441,6 +591,7 @@ const CONFIG = {
     document.addEventListener("keydown", retryAutoMusic);
     document.addEventListener("WeixinJSBridgeReady", retryAutoMusic);
   }
+  // 统一处理自动播放与手动切换；automatic 决定失败时是否静默等待授权或提示访客。
   async function setMusic(on, automatic = false) {
     if (!CONFIG.audio) {
       if (!automatic) toast("海岛音乐还在路上，请先配置音频文件");
@@ -455,6 +606,7 @@ const CONFIG = {
       audio.muted = false;
       try {
         await audio.play();
+        // 等待 play 完成期间可能发生新操作；过期结果不再更新 UI 或启动音量渐变。
         if (version !== musicVersion) return;
         clearAutoMusic();
         musicUI(true);
@@ -475,6 +627,7 @@ const CONFIG = {
     } else {
       musicBtn.removeAttribute("aria-busy");
       musicUI(false);
+      // 淡出完成才真正暂停；回调再次检查意图，避免中途重新开启时被旧操作暂停。
       fadeVolume(0, 650, () => {
         if (!musicWanted) {
           audio.pause();
@@ -506,6 +659,7 @@ const CONFIG = {
   const inWechat = /MicroMessenger/i.test(navigator.userAgent);
   const sharePoster = $("#share-poster");
   const shareSave = $("#share-save");
+  // HTML 内嵌完整邀请图片用于离线兜底；线上优先使用独立图片，便于浏览器缓存。
   const embeddedPoster = sharePoster.getAttribute("src");
   shareSave.href = embeddedPoster;
   if (/^https?:$/.test(location.protocol) && CONFIG.share.poster) {
@@ -536,6 +690,7 @@ const CONFIG = {
   // 相册对话框与手势。不监听主页面滚轮，不改变原生页面滚动。
   let photoIndex = 0;
   const lightbox = $("#lightbox");
+  // 只更新当前照片、标题与序号；切图始终复用同一个弹窗节点。
   function renderPhoto() {
     const p = photos[photoIndex];
     $("#lightbox-image").src = p.src;
@@ -549,6 +704,7 @@ const CONFIG = {
   $("#lightbox-image").addEventListener("error", () => {
     $("#lightbox-image").src = photoPlaceholder(photos[photoIndex], photoIndex);
   });
+  // 先解除 hidden，再在下一帧添加 open 类，确保 CSS 能从初始状态执行入场过渡。
   function openLayer(layer, focusSelector) {
     rememberFocus(layer);
     layer.hidden = false;
@@ -559,6 +715,7 @@ const CONFIG = {
       .querySelector(focusSelector || "button")
       ?.focus({ preventScroll: true });
   }
+  // 先移除入场类执行退场，过渡结束再隐藏；再次打开时旧的关闭计时不会误隐藏它。
   function closeLayer(layer) {
     if (layer.hidden) return;
     layer.classList.remove("open");
@@ -570,11 +727,13 @@ const CONFIG = {
       motionPaused() ? 0 : 220,
     );
   }
+  // 先确定要展示的照片，再打开弹窗并把键盘焦点送到关闭按钮。
   function openPhoto(i) {
     photoIndex = i;
     renderPhoto();
     openLayer(lightbox, "#photo-close");
   }
+  // 通过取模实现首尾循环；先加照片数量，避免向前切换时得到负索引。
   function changePhoto(delta) {
     photoIndex = (photoIndex + delta + photos.length) % photos.length;
     renderPhoto();
@@ -585,6 +744,7 @@ const CONFIG = {
   lightbox.addEventListener("click", (e) => {
     if (e.target === lightbox) closeLayer(lightbox);
   });
+  // 只在相册弹窗内拦截滚轮，使用幅度阈值和 350ms 间隔防止触控板一次滑动连翻多张。
   let wheelStamp = 0;
   lightbox.addEventListener(
     "wheel",
@@ -597,6 +757,7 @@ const CONFIG = {
     },
     { passive: false },
   );
+  // 只记录单指手势；结束时要求横向位移明显大于纵向位移，避免上下滑动被误判为切图。
   let touchStart = null;
   $("#lightbox-image").addEventListener(
     "touchstart",
@@ -621,6 +782,7 @@ const CONFIG = {
   );
   // 祝福公告板：最多 50 条本机留言。明确显示保存范围，未假装存在服务器。
   const savedWishes = storage.get("buji-wishes", []);
+  // 读取历史留言后重新校验字段并限制长度；本机存储也可能被旧版本或其他脚本改写。
   let wishes = (Array.isArray(savedWishes) ? savedWishes : [])
     .filter(
       (x) => x && typeof x.name === "string" && typeof x.text === "string",
@@ -630,11 +792,13 @@ const CONFIG = {
       name: x.name.slice(0, 20),
       text: x.text.slice(0, 160),
     }));
+  // 创建一张纯文本祝福便签；fresh 决定是否附加新留言贴入动画。
   function wishNode(w, fresh = false) {
     const n = el("article", "note" + (fresh ? " new-note" : ""));
     n.append(el("p", "", w.text), el("div", "note-author", "— " + w.name));
     return n;
   }
+  // 优先展示本机新留言，再补示例祝福；公告板最多显示六张，存储仍保留五十条。
   function renderWishes() {
     const notes = $("#notes");
     notes.replaceChildren();
@@ -643,6 +807,7 @@ const CONFIG = {
       .forEach((w) => notes.append(wishNode(w)));
   }
   renderWishes();
+  // 必填校验同时更新可见错误和 aria-invalid，让读屏与视觉反馈保持一致。
   function validateField(input, errorID, message) {
     const empty = !input.value.trim();
     $("#" + errorID).textContent = empty ? message : "";
@@ -663,6 +828,7 @@ const CONFIG = {
       "写一句祝福，再把它贴上小岛吧。",
     ),
   );
+  // 表单仅在本机处理：校验、截断、保存、重绘；不向服务器发送访客信息。
   $("#wish-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const nameOK = validateField(
@@ -685,6 +851,7 @@ const CONFIG = {
     };
     wishes.unshift(w);
     wishes = wishes.slice(0, 50);
+    // 存储失败也保留当前页面内存中的留言，通过提示明确它只在本次浏览可见。
     const saved = storage.set("buji-wishes", wishes);
     renderWishes();
     $("#notes").firstElementChild.classList.add("new-note");
@@ -719,10 +886,12 @@ const CONFIG = {
     /* 浏览器禁用存储也可收集。 */
   }
   let stickerIO = null;
+  // 收集事实立即写入 Set；视觉反馈单独排队，避免动画时序影响实际图鉴进度。
   let pendingCollections = [],
     collectionBusy = false,
     collectionWakePending = false;
   const collectionTimers = new Set();
+  // 集中登记收集动画的延迟任务，暂停动效、切后台或重开图鉴时可以一次清理。
   function collectionLater(callback, ms) {
     const timer = setTimeout(() => {
       collectionTimers.delete(timer);
@@ -730,6 +899,7 @@ const CONFIG = {
     }, ms);
     collectionTimers.add(timer);
   }
+  // 清除排队任务与临时动画节点，但不删除 collected 中已经获得的贴纸。
   function stopCollectionAnimation() {
     collectionTimers.forEach(clearTimeout);
     collectionTimers.clear();
@@ -741,6 +911,7 @@ const CONFIG = {
     );
     $("#atlas-btn").classList.remove("collect-caught");
   }
+  // 从 collected 统一刷新工具按钮计数、读屏标签、进度与图鉴锁定样式。
   function updateAtlas() {
     const count = collected.size;
     $("#sticker-count").textContent = count;
@@ -764,6 +935,7 @@ const CONFIG = {
     });
   }
   updateAtlas();
+  // 串行播放“发现、飞入、计数”反馈；暂停或后台状态下不创建新的装饰节点。
   function animateCollection() {
     if (
       collectionBusy ||
@@ -803,6 +975,7 @@ const CONFIG = {
     notice.append(emblem, text);
     document.body.append(notice);
     collectionLater(() => {
+      // 使用视口坐标计算飞行起点和工具按钮终点，交给 CSS 自定义属性执行位移动画。
       const start = emblem.getBoundingClientRect();
       const dest = $("#atlas-btn").getBoundingClientRect();
       const fly = el("span", "collection-fly");
@@ -840,6 +1013,7 @@ const CONFIG = {
       }, 750);
     }, 800);
   }
+  // Set 保证同一个模块只计数一次；关闭动效时照常更新图鉴与读屏提示。
   function collectSticker(i) {
     if (collected.has(i)) return;
     collected.add(i);
@@ -850,6 +1024,7 @@ const CONFIG = {
     pendingCollections.push(i);
     animateCollection();
   }
+  // 恢复初始收藏状态并重新观察模块哨兵，用于浏览器后退缓存恢复后的新一轮收集。
   function resetStickerCollection() {
     stopCollectionAnimation();
     collected.clear();
@@ -878,6 +1053,7 @@ const CONFIG = {
   });
   if ("IntersectionObserver" in window) {
     document.documentElement.classList.add("motion-ready");
+    // 入场效果只执行一次：元素进入视口后解除观察，减少长页面持续计算。
     const revealIO = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
@@ -889,6 +1065,7 @@ const CONFIG = {
       { threshold: 0.08, rootMargin: "0px 0px -10px 0px" },
     );
     $$(".reveal").forEach((n) => revealIO.observe(n));
+    // 贴纸观察独立于入场动画：以模块底部的细小哨兵进入视口为完成阅读的信号。
     stickerIO = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
@@ -900,6 +1077,7 @@ const CONFIG = {
       { threshold: 0, rootMargin: "0px 0px -16px 0px" },
     );
     $$("[data-sticker]").forEach((s) => {
+      // 哨兵绝对定位在模块底部，不占布局、不拦截点击，也不暴露给读屏。
       const sent = el("span");
       sent.dataset.collect = s.dataset.sticker;
       sent.style.cssText =
@@ -925,6 +1103,7 @@ const CONFIG = {
       "butterfly",
       "heart",
     ];
+  // 通过索引分散位置、时长和负延迟，让粒子初次显示就处于不同动画阶段。
   for (let i = 0; i < particleCount; i++) {
     const n = el(
       "span",
@@ -977,6 +1156,7 @@ const CONFIG = {
     })
     .catch(() => {});
   window.addEventListener("resize", updateHeroWave, { passive: true });
+  // 统一同步 CSS 装饰、收集反馈与 WebGL 状态；手动暂停按钮与系统偏好共用这条路径。
   const syncMotion = () => {
     document.body.classList.toggle("no-motion", motionPaused());
     if (motionPaused()) stopCollectionAnimation();
@@ -998,6 +1178,7 @@ const CONFIG = {
   const particles = $("#particles");
   const pennants = $$(".pennants");
   const clouds = $$(".cloud");
+  // 滚动事件可能一帧触发多次，用 requestAnimationFrame 合并更新；监听器保持 passive。
   let scrollTick = false;
   window.addEventListener(
     "scroll",
@@ -1020,6 +1201,7 @@ const CONFIG = {
     },
     { passive: true },
   );
+  // 草地彩蛋仅响应空白区域下部，避开链接与按钮；临时气泡显示后自动移除。
   $("#lawn").addEventListener("click", (e) => {
     if (e.target.closest("button,a")) return;
     const box = $("#lawn").getBoundingClientRect();
@@ -1037,9 +1219,11 @@ const CONFIG = {
     $("#lawn").append(b);
     setTimeout(() => b.remove(), 1200);
   });
+  // 让 Escape 和弹窗切换共用关闭入口，无需分别判断每一种对话框。
   function closeActive() {
     if (activeDialog) closeLayer(activeDialog);
   }
+  // 键盘交互集中处理：Escape 关闭，相册方向键切图，Tab 在活动弹窗的首尾控件间循环。
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeActive();
@@ -1073,6 +1257,7 @@ const CONFIG = {
     const loader = $("#loader");
     if (loader.hidden) return;
     const start = performance.now();
+    // 等待封面解码或达到 2.2 秒上限；即便图片请求悬挂，也不会一直挡住正文。
     await Promise.race([
       $("#hero-image")
         .decode()
@@ -1088,6 +1273,7 @@ const CONFIG = {
         } catch {}
         setTimeout(() => (loader.hidden = true), 750);
       },
+      // 正常情况下至少保留 1.2 秒开场展示时间；图片等待已超过时则立即开始退场。
       Math.max(0, 1200 - elapsed),
     );
   }

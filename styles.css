@@ -1,4 +1,5 @@
 /* 页面样式：离线编译的 Tailwind 基础样式与小岛主题样式，无需 CDN。 */
+/* 离线工具类的变量初值；后面的 transform、filter 等工具会组合使用这些值。 */
 *,
 :after,
 :before {
@@ -107,6 +108,7 @@
   --tw-contain-paint: ;
   --tw-contain-style: ;
 }
+/* 基础工具类由页面 HTML 直接引用；主题组件样式从下方设计令牌区开始。 */
 .visible {
   visibility: visible;
 }
@@ -165,6 +167,7 @@
   src: url("assets/island-round.ttf") format("truetype");
 }
 
+/* 主题令牌集中维护文字、纸张、木色、阴影和字体；调整整体配色优先修改这里。 */
 :root {
   --ink: #42594b;
   --muted: #667366;
@@ -188,6 +191,7 @@
 html {
   scroll-padding-top: 24px;
 }
+/* 设置整页背景与默认文字；实际内容宽度由 .roll 限制为手机长卷。 */
 body {
   margin: 0;
   background: #edf0df;
@@ -276,6 +280,7 @@ body::before {
     radial-gradient(ellipse at 5% 30%, #bad4b53b, transparent 42%),
     radial-gradient(ellipse at 95% 70%, #e9cab543, transparent 40%);
 }
+/* 键盘用户可用的跳过装饰入口，获得焦点后才移入可视范围。 */
 .skip {
   position: absolute;
   z-index: 99;
@@ -287,12 +292,14 @@ body::before {
 .skip:focus {
   top: 16px;
 }
+/* 图标 symbol 仅作引用来源，不在页面中独立占据空间。 */
 .sprite {
   position: absolute;
   width: 0;
   height: 0;
   overflow: hidden;
 }
+/* 统一图标默认尺寸、笔画和收缩行为；mini 与 scene-icon 分别用于行内和场景图标。 */
 .icon {
   width: 24px;
   height: 24px;
@@ -315,6 +322,7 @@ body::before {
   stroke: currentColor;
   stroke-width: 1.2;
 }
+/* 长卷容器承载从白昼到夜色的背景变化；桌面也保持单列和原有内容顺序。 */
 .roll {
   position: relative;
   isolation: isolate;
@@ -345,6 +353,7 @@ body::before {
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%237d8a65' opacity='.2' filter='url(%23n)' d='M0 0h160v160H0z'/%3E%3C/svg%3E");
 }
+/* 各段统一留白与定位上下文，装饰图形和收集哨兵相对各自模块定位。 */
 .section {
   position: relative;
   padding: 44px 28px 52px;
@@ -377,6 +386,7 @@ body::before {
   margin-top: 10px;
   letter-spacing: 1px;
 }
+/* 默认先显示内容；只有 JS 成功启用 motion-ready 后，未入场节点才使用隐藏过渡。 */
 .reveal {
   transition:
     opacity 0.7s ease,
@@ -391,6 +401,7 @@ body::before {
   opacity: 1;
   translate: 0 0;
 }
+/* 按压反馈集中在 transform 上，避免按钮按下时改变布局尺寸。 */
 .press {
   transition:
     transform 0.24s var(--spring),
@@ -401,6 +412,7 @@ body::before {
   transform: scale(0.96) !important;
   filter: brightness(0.96);
 }
+/* 主按钮的尺寸、触控面积和木质质感；secondary 类只覆盖次级视觉。 */
 .btn {
   display: flex;
   align-items: center;
@@ -441,6 +453,7 @@ body::before {
   background: transparent;
   font-size: 13px;
 }
+/* 纸张与木板是跨模块共用的材质容器，伪元素负责边缘和纹理装饰。 */
 .paper {
   background: var(--paper);
   box-shadow: var(--soft-shadow);
@@ -473,6 +486,7 @@ body::before {
   border: 3px solid #f3ddba;
   border-radius: 17px;
 }
+/* 通用轻浮动动画；主脚本统一处理后台暂停和减少动态效果。 */
 .floating {
   animation: float 6s ease-in-out infinite;
 }
@@ -488,6 +502,7 @@ body::before {
   color: #fff9e7;
   filter: drop-shadow(0 3px 2px #7e8f5c33);
 }
+/* 云层由主体和两个伪元素拼合；不同变体只调整位置、大小与节奏。 */
 .cloud {
   transform: translateY(var(--far-parallax, 0px));
   position: absolute;
@@ -645,6 +660,7 @@ body::before {
   aspect-ratio: 1 / 1;
   z-index: 1;
 }
+/* 封面图片与 WebGL 画布共用定位区域，脚本通过状态类决定是否显示动态层。 */
 .hero-scene {
   position: relative;
   width: 100%;
@@ -666,6 +682,7 @@ body::before {
   );
 }
 .hero-scene > img,
+/* 画布覆盖静图且不接收指针事件；静图始终保留作为加载和渲染故障兜底。 */
 .hero-motion {
   position: absolute;
   inset: 0;
@@ -712,6 +729,7 @@ body::before {
   animation: garland 7s ease-in-out infinite;
   opacity: 0.86;
 }
+/* 姓名木牌通过伪元素模拟边缘细节，文案保持 HTML 文本便于修改和读屏。 */
 .name-plaque {
   position: relative;
   z-index: 4;
@@ -763,6 +781,7 @@ body::before {
   color: #6d593d;
   margin-top: 2px;
 }
+/* 首屏日期票据将公历、星期时间、农历拆行，避免小屏长文案挤压。 */
 .date-ticket {
   display: flex;
   align-items: center;
@@ -921,6 +940,7 @@ body::before {
   height: 514px;
   margin: 15px -5px 0;
 }
+/* 路线 SVG 作为背景连线，不参与文字排版；节点通过 data-step 分别定位。 */
 .story-route {
   position: absolute;
   inset: 0;
@@ -933,6 +953,7 @@ body::before {
   stroke-dasharray: 3 12;
   filter: drop-shadow(0 2px 1px #84a47a26);
 }
+/* 旅行节点使用自己的入场效果，坐标由后续 data-step 选择器决定。 */
 .story-stop {
   position: absolute;
   width: 125px;
@@ -1120,6 +1141,7 @@ body::before {
   line-height: 1.8;
   margin-top: 3px;
 }
+/* 导航操作集中在信息卡底部，链接事件由 main.js 按微信或普通浏览器分流。 */
 .info-actions {
   margin-top: 26px;
 }
@@ -1134,6 +1156,7 @@ body::before {
 .location {
   padding-top: 21px;
 }
+/* 手绘地图本身是复制酒店名称的按钮；图片比例固定以减少懒加载后的布局移动。 */
 .map-frame {
   padding: 11px 11px 0;
   border-radius: 27px;
@@ -1182,6 +1205,7 @@ body::before {
 .countdown .section-head {
   margin-bottom: 24px;
 }
+/* 倒计时以四等分网格排列；仅数字变化时由脚本重新触发 tick 动画。 */
 .countdown-panel {
   position: relative;
   display: grid;
@@ -1291,6 +1315,7 @@ body::before {
   padding-bottom: 15px;
   border-bottom: 1px dashed #c7caac;
 }
+/* 婚礼流程项由 CONFIG.agenda 动态生成，列表样式不依赖固定条目数量。 */
 .task-list {
   list-style: none;
   padding: 0;
@@ -1357,6 +1382,7 @@ body::before {
 .album {
   padding-top: 36px;
 }
+/* 相册保持两列，卡片倾角营造手工相片感，图片本身使用裁切填充。 */
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1429,6 +1455,7 @@ body::before {
   bottom: -26px;
   right: -22px;
 }
+/* 相册、图鉴与分享共用遮罩基础；hidden 控制是否参与显示，open 控制入退场过渡。 */
 .lightbox {
   position: fixed;
   inset: 0;
@@ -1443,6 +1470,7 @@ body::before {
   transition: opacity 0.22s;
   overflow-y: auto;
 }
+/* 明确隐藏优先级，避免弹窗容器的布局样式覆盖 HTML hidden 属性。 */
 .lightbox[hidden] {
   display: none;
 }
@@ -1465,6 +1493,7 @@ body::before {
   padding: 12px 12px 18px;
   border-radius: 21px;
 }
+/* 大图按容器限制等比显示；不固定裁切尺寸，保证横竖照片均可完整查看。 */
 .lightbox-frame img {
   width: 100%;
   height: auto;
@@ -1554,6 +1583,7 @@ body::before {
 .bulletin::after {
   right: 12px;
 }
+/* 祝福板采用规则网格与小角度旋转，留言内容仍按 DOM 顺序阅读。 */
 .notes {
   display: flex;
   flex-direction: column;
@@ -1601,6 +1631,7 @@ body::before {
 .new-note {
   animation: pin-note 0.6s var(--spring);
 }
+/* 表单样式与公告便签分离；错误文本和 aria-invalid 由主脚本统一维护。 */
 .wish-form {
   margin-top: 25px;
   padding: 23px 21px 25px;
@@ -1658,6 +1689,7 @@ body::before {
   min-height: 0;
   margin-top: 4px;
 }
+/* 没有校验错误时不留额外占位，提交失败再显示对应文字。 */
 .error:empty {
   display: none;
 }
@@ -1740,6 +1772,7 @@ body::before {
   height: 14px;
 }
 /* ===== 轻量前景、浮动工具组，安全区内始终纵向排列 ===== */
+/* 前景粒子覆盖画面但不拦截点击；脚本通过硬件能力控制粒子数量。 */
 .particles {
   position: fixed;
   inset: 0;
@@ -1765,6 +1798,7 @@ body::before {
   width: 100%;
   height: 100%;
 }
+/* 额外粒子默认隐藏，背景音乐播放时通过 body.music-on 显示更多装饰。 */
 .particle.extra {
   display: none;
 }
@@ -1787,6 +1821,7 @@ body::before {
   height: 100%;
   transform: translateY(var(--particle-parallax, 0px));
 }
+/* 固定工具组预留手机安全区；音乐、分享与图鉴始终纵向排列。 */
 .tool-group {
   position: fixed;
   right: max(14px, calc((100vw - 480px) / 2 + 13px));
@@ -1863,6 +1898,7 @@ body::before {
   min-height: 44px;
   padding: 8px;
 }
+/* 全局短提示固定在视口内；不接收点击，显示周期由 main.js 管理。 */
 .toast {
   position: fixed;
   left: 50%;
@@ -1972,6 +2008,7 @@ body::before {
   margin-top: 3px;
   line-height: 1.5;
 }
+/* 收集飞行的起点由 JS 设置，终点偏移通过 --fly-x 和 --fly-y 传入动画。 */
 .collection-fly {
   position: fixed;
   z-index: 61;
@@ -2037,6 +2074,7 @@ body::before {
   width: 34px;
   height: 34px;
 }
+/* 未收集条目弱化视觉并隐藏具体名称，收集后由脚本移除 locked 类。 */
 .atlas-item.locked {
   filter: grayscale(1);
   opacity: 0.5;
@@ -2126,6 +2164,7 @@ body::before {
   font-size: 12px;
   line-height: 1.8;
 }
+/* 分享图保持原图比例与长按行为，不叠加透明按钮，便于微信原生保存。 */
 .share-poster {
   display: block;
   width: 100%;
@@ -2153,6 +2192,7 @@ body::before {
   color: var(--muted);
   margin-top: 14px;
 }
+/* 欢迎层有独立 CSS 超时退场，与 loader.js 和主脚本共同避免资源卡住时遮挡正文。 */
 .loader {
   position: fixed;
   inset: 0;
@@ -2167,6 +2207,7 @@ body::before {
   animation: loader-timeout 0s 5s forwards;
   pointer-events: none;
 }
+/* CSS 自身的加载超时兜底，脚本未执行时也能让欢迎遮罩退出。 */
 @keyframes loader-timeout {
   to { visibility: hidden; opacity: 0; }
 }
@@ -2211,6 +2252,7 @@ body::before {
 .loader-dots i:nth-child(3) {
   animation-delay: 0.36s;
 }
+/* 手动暂停或系统减少动效时统一停止装饰；具体覆盖与后面的媒体查询共同生效。 */
 .no-motion *,
 .no-motion *::before,
 .no-motion *::after {
@@ -2224,6 +2266,7 @@ body::before {
   opacity: 1 !important;
   translate: none !important;
 }
+/* 通用装饰：悬浮、云朵、彩旗、手绘路径与提示箭头的循环动画。 */
 @keyframes float {
   0%,
   100% {
@@ -2280,11 +2323,13 @@ body::before {
     transform: translate(11px, 9px);
   }
 }
+/* 倒计时数字更新时的短促缩放，只对数值发生变化的节点播放。 */
 @keyframes number-pop {
   50% {
     transform: translateY(-3px) scale(1.04);
   }
 }
+/* 粒子使用元素自身的时长、延迟和水平位置，避免所有粒子同相位运动。 */
 @keyframes drift {
   0% {
     transform: translate3d(0, -20px, 0) rotate(0);
@@ -2301,6 +2346,7 @@ body::before {
     opacity: 0;
   }
 }
+/* 音乐开启后显示的声波动画，关闭音乐时由状态类隐藏。 */
 @keyframes sound {
   50% {
     opacity: 0.45;
@@ -2329,6 +2375,7 @@ body::before {
     transform: scale(1.15);
   }
 }
+/* 新祝福便签贴入公告板的短动画，不改变保存或显示的顺序。 */
 @keyframes pin-note {
   from {
     opacity: 0;
@@ -2356,6 +2403,7 @@ body::before {
     transform: translate(-50%, -48px) scale(0.95);
   }
 }
+/* 收集反馈依次使用发现提示、飞行、工具回弹和增量数字等短动画。 */
 @keyframes sticker-discover {
   from {
     opacity: 0;
@@ -2427,6 +2475,7 @@ body::before {
     transform: translateY(-30px) scale(1);
   }
 }
+/* 仅在设备支持悬停时启用 hover 效果，避免触屏点击后悬停状态粘住。 */
 @media (hover: hover) {
   .press:hover {
     filter: brightness(1.025);
@@ -2439,6 +2488,7 @@ body::before {
     translate: 0 -2px;
   }
 }
+/* 较宽屏幕只调整外围留白与工具位置，保留手机长卷的主体布局。 */
 @media (min-width: 600px) {
   .roll {
     margin: 24px auto;
@@ -2455,6 +2505,7 @@ body::before {
     padding-bottom: 150px;
   }
 }
+/* 窄屏收紧文字与间距，确保姓名、票据与底部工具不造成横向溢出。 */
 @media (max-width: 350px) {
   .section {
     padding-left: 22px;
@@ -2477,6 +2528,7 @@ body::before {
     gap: 6px;
   }
 }
+/* 系统减少动态效果的 CSS 兜底；即使 JS 未启动，也避免循环动画并显示入场内容。 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

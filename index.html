@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
+  <!-- 页面结构说明：正文可直接静态阅读；data-bind/data-date 由 main.js 填充，data-sticker 标记收集模块。 -->
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -36,6 +37,7 @@
     <link rel="canonical" href="https://wedding.xxcfun.cn" />
     <title>叮～有一封布吉岛来信📩</title>
     <!-- Tailwind CSS 3.4.17 离线编译，仅包含本页实际使用的工具类。 -->
+    <!-- 首屏图片优先下载；下方封面 img 使用同一资源，避免高清图片等到解析正文时才开始请求。 -->
     <link rel="preload" href="assets/island-cover-hd.webp" as="image" type="image/webp" fetchpriority="high" />
     <!-- 关键样式随 HTML 到达；外部样式超时也能先阅读请柬。 -->
     <style>
@@ -55,9 +57,11 @@
       img { max-width: 100%; }
       .loader { display: none; }
     </style>
+    <!-- 完整样式先预加载，加载后切换为 stylesheet；上方内联样式负责请求期间的首屏可读性。 -->
     <link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
     <noscript><link rel="stylesheet" href="styles.css" /></noscript>
     <!-- 并行下载，等 HTML 解析后按顺序执行；资源慢时不阻塞正文。 -->
+    <!-- 脚本依赖顺序：加载兜底 → 暴露 createHeroMotion → 主交互读取 CONFIG 并连接各模块。 -->
     <script defer src="loader.js"></script>
     <script defer src="hero-motion.js"></script>
     <script defer src="main.js"></script>
@@ -270,6 +274,7 @@
         </symbol>
       </defs>
     </svg>
+    <!-- 欢迎层只作开场提示，CSS 与两个脚本均有退场路径；不会锁住正文滚动。 -->
     <div
       class="loader"
       id="loader"
@@ -282,6 +287,7 @@
       <div class="loader-title">欢迎来到我们的布吉岛</div>
       <div class="loader-dots" aria-hidden="true"><i></i><i></i><i></i></div>
     </div>
+    <!-- 十个 section 按阅读顺序组成长卷；每个 data-sticker 编号对应 main.js 中 stickerDefs 的索引。 -->
     <main class="roll mx-auto w-full relative" id="island">
       <!-- 模块一：可修改首屏标题、副标题；姓名、日期由 CONFIG 统一填写。 -->
       <section class="hero" data-sticker="0" aria-labelledby="cover-title">
@@ -443,6 +449,7 @@
           <h2 id="story-title">和你走过的风景</h2>
           <p class="subcopy">从山海到街巷，下一站是我们的婚礼</p>
         </header>
+        <!-- 旅行节点由主脚本追加，原有路线 SVG 保留为静态背景。 -->
         <div class="story-map" id="story-map">
           <svg
             class="story-route"
@@ -496,6 +503,7 @@
               </p>
             </div>
           </div>
+          <!-- 导航链接保留 Android 高德协议作为静态初值，运行后由脚本识别 iOS 与微信环境。 -->
           <div class="info-actions">
             <a
               class="btn press"
@@ -646,6 +654,7 @@
         <div class="bulletin wood reveal">
           <div class="notes" id="notes"></div>
         </div>
+        <!-- 使用自定义必填提示替代浏览器默认气泡；提交后保存到访客本机，不发送到公共留言服务。 -->
         <form class="wish-form reveal" id="wish-form" novalidate>
           <h3 class="form-title">给两位岛民的留言</h3>
           <label for="guest-name"
@@ -728,11 +737,13 @@
         </button>
       </section>
     </main>
+    <!-- 全屏前景装饰容器；粒子节点由主脚本按硬件能力生成，不参与读屏和交互。 -->
     <div class="particles" aria-hidden="true">
       <div class="particle-wrap" id="particles"></div>
     </div>
     <!-- 默认尝试播放背景音乐；浏览器拦截时首次交互后播放，音乐按钮可暂停或继续。 -->
     <audio id="bgm" loop muted preload="auto" playsinline></audio>
+    <!-- 固定工具按钮用稳定 ID 绑定事件，aria-pressed 由脚本同步音乐实际状态。 -->
     <div class="tool-group" aria-label="小岛工具">
       <button
         type="button"
@@ -768,6 +779,7 @@
         ><span class="tool-count" id="sticker-count" aria-hidden="true">0</span>
       </button>
     </div>
+    <!-- 复用的轻提示节点；polite 让读屏在合适时机播报，避免打断正在阅读的内容。 -->
     <div
       id="toast"
       class="toast"
@@ -775,6 +787,7 @@
       aria-live="polite"
       aria-atomic="true"
     ></div>
+    <!-- 仅供读屏播报收集进度；视觉发现提示和飞行动画使用另行创建的临时节点。 -->
     <div
       id="collection-status"
       class="sr-only"
@@ -814,6 +827,7 @@
         <p class="lightbox-hint">左右滑动 / 滚轮翻阅，也可使用上下方按钮</p>
       </div>
     </div>
+    <!-- 图鉴弹窗的格子与进度由 collected 集合生成；hidden/open 与相册共用弹窗生命周期。 -->
     <div
       class="lightbox atlas-dialog"
       id="atlas-dialog"
@@ -860,6 +874,7 @@
         <p class="share-hint" id="share-instructions">
           长按下方图片，把这份幸福邀请存进相册
         </p>
+        <!-- 邀请原图同时内嵌在 HTML 中作为离线兜底；更新婚期资料后由素材生成脚本同步重建。 -->
         <div class="share-poster-frame">
           <img
             class="share-poster"
