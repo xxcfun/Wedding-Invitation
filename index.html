@@ -38,7 +38,7 @@
     <title>叮～有一封布吉岛来信📩</title>
     <!-- Tailwind CSS 3.4.17 离线编译，仅包含本页实际使用的工具类。 -->
     <!-- 首屏图片优先下载；下方封面 img 使用同一资源，避免高清图片等到解析正文时才开始请求。 -->
-    <link rel="preload" href="assets/island-cover-mobile.webp" imagesrcset="assets/island-cover-mobile.webp 960w, assets/island-cover-hd.webp 1254w" imagesizes="(max-width: 480px) 100vw, 480px" as="image" type="image/webp" fetchpriority="high" />
+    <link rel="preload" href="assets/island-cover-hd.webp" as="image" type="image/webp" fetchpriority="high" />
     <!-- 完整样式加载完成后再展示页面，避免先出现简化样式。 -->
     <link rel="stylesheet" href="styles.css" />
     <!-- 并行下载，等 HTML 解析后按顺序执行；资源慢时不阻塞正文。 -->
@@ -296,9 +296,7 @@
           <div class="hero-scene" id="hero-scene">
             <img
               id="hero-image"
-              src="assets/island-cover-mobile.webp"
-              srcset="assets/island-cover-mobile.webp 960w, assets/island-cover-hd.webp 1254w"
-              sizes="(max-width: 480px) 100vw, 480px"
+              src="assets/island-cover-hd.webp"
               width="1254"
               height="1254"
               fetchpriority="high"

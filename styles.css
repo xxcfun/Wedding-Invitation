@@ -2400,7 +2400,7 @@ body::before {
   z-index: 100;
   transition: opacity 0.2s;
   /* 脚本缺失或执行失败时，遮罩也会自行退出。 */
-  animation: loader-timeout 0s 1.5s forwards;
+  animation: loader-timeout 0s 3s forwards;
   pointer-events: none;
 }
 /* CSS 自身的加载超时兜底，脚本未执行时也能让欢迎遮罩退出。 */

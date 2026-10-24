@@ -1297,13 +1297,16 @@ const CONFIG = {
       }
     }
   });
-  // 欢迎层不再强制停留：封面就绪即退场，慢网最多等待 800ms，文字可先阅读。
+  // 首次开场至少展示 2 秒；图片等待仍有上限，异常由独立脚本与 CSS 退场。
   async function finishLoading() {
     const loader = $("#loader");
     if (loader.hidden) return;
-    await Promise.race([
-      $("#hero-image").decode().catch(() => {}),
-      new Promise((resolve) => setTimeout(resolve, 800)),
+    await Promise.all([
+      Promise.race([
+        $("#hero-image").decode().catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]),
+      new Promise((resolve) => setTimeout(resolve, Math.max(0, 2000 - (performance.now() - (window.invitationLoadingStarted ?? performance.now()))))),
     ]);
     loader.classList.add("hidden-loader");
     try {

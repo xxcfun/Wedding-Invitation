@@ -81,14 +81,7 @@
 
 交互验证包括：十个模块及六张相片、首次加载、相册按钮 / 触摸手势 / 滚轮 / 键盘、留言验证与刷新保存、文本防注入、十枚贴纸收集、减少动态效果。播放器使用仅存在于测试内存中的静音 WAV 验证淡入淡出和快速切换，交付 HTML 不含测试音频。手机高德 App 的实际唤起与微信长按保存应以实机结果为准。
 
-实际截图：
-
-- `island-preview-mobile.png`
-- `island-preview-desktop.png`
-- `island-preview-fullpage.png`
-- `island-preview-navigation.png`
-- `island-preview-share.png`
-- `island-preview-collection.png`
+历史预览截图已清理；运行检查脚本可重新生成验证截图。
 
 ## 素材
 
@@ -123,5 +116,11 @@
 - 字体改为 `unicode-range` 分包：`island-round-0.woff2` 包含当前固定文案字符，约 103 KB；其余字符分为 24 个包，按实际显示字符加载。全部 7053 个字符仍保留，留言和姓名不会因分包缺字。原始 TTF 与完整 WOFF2 保留作为生成源和存档，不再默认下载整套字库。
 - 封面通过 `srcset` 和匹配的 preload 提供 960px / 1254px 两档；960px WebP 约 156 KB，高像素密度设备仍可选高清原图。静图与 WebGL 使用浏览器选中的同一图片。
 - 音乐改用 96 kbps MP3 `island-bgm-lite.mp3`，约 745 KB；原音乐保留。自动播放只在封面解码完成后尝试，不再在慢网 3 秒后抢带宽；主动点击仍立即响应。
-- 更新文案、字体、封面或原音乐后，运行 `python3 scripts/optimize-assets.py` 重新生成资源（依赖 Pillow、fonttools、brotli、imageio-ffmpeg）。更新文案后重新生成可让新增文字也进入常用字体包。
+- 更新文案、字体、封面或原音乐后，运行 `python3 scripts/optimize-assets.py` 重新生成字体和音乐资源（依赖 fonttools、brotli、imageio-ffmpeg）。更新文案后重新生成可让新增文字也进入常用字体包。
 - 验证：七种首屏加载场景、7053 字符完整且无重叠覆盖、压缩音频完整解码及 JS 语法检查。体积变化不等同于线上耗时改善，实际效果需部署后在手机微信与移动网络确认。
+
+首次开场动画现至少展示约 2 秒后淡出；独立脚本 2.5 秒兜底，CSS 在 3 秒兜底。会话内再次打开及减少动态效果模式仍跳过开场。
+
+封面清晰度调整：当前首页统一使用原 1254×1254 高清 WebP（`island-cover-hd.webp`），预加载与动画纹理使用同一资源，不再自动选取 960px 压缩版。
+
+未使用图片清理：已删除旧版无人岛插画、旧分享图、八帧/拆层素材、960px 封面、历史截图及未接入页面的生成 PNG。保留当前高清封面、分享卡、邀请卡、加载失败备用封面及分享卡生成所需无损原图。

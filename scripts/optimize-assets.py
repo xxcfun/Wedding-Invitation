@@ -1,7 +1,6 @@
-"""Rebuild font chunks, mobile cover and audio. Requires Pillow, fonttools, brotli, imageio-ffmpeg."""
+"""Rebuild font chunks and audio. Requires fonttools, brotli, imageio-ffmpeg."""
 from pathlib import Path
 import re, subprocess
-from PIL import Image
 from fontTools import subset
 from fontTools.ttLib import TTFont
 root = Path(__file__).resolve().parent.parent
@@ -32,10 +31,9 @@ start = s.index('/* FONT CHUNKS START */') if '/* FONT CHUNKS START */' in s els
 end = s.index('/* FONT CHUNKS END */', start) + len('/* FONT CHUNKS END */') if '/* FONT CHUNKS END */' in s else s.index('/* 主题令牌', start)
 s = s[:start] + '/* FONT CHUNKS START */\n' + '\n'.join(rules) + '\n/* FONT CHUNKS END */\n\n' + s[end:]
 css.write_text(s)
-Image.open(assets / 'island-cover-hd.png').convert('RGB').resize((960,960), Image.Resampling.LANCZOS).save(assets / 'island-cover-mobile.webp', quality=85, method=6)
 import imageio_ffmpeg
 subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), '-y', '-i', str(assets / 'island-bgm.mp3'), '-codec:a', 'libmp3lame', '-b:a', '96k', str(assets / 'island-bgm-lite.mp3')], check=True, capture_output=True)
 print('Font common chunk:', (assets / 'island-round-0.woff2').stat().st_size)
 print('Font coverage:', len(all_chars), 'characters in', len(groups), 'chunks')
-for name in ['island-cover-mobile.webp','island-bgm-lite.mp3']:
+for name in ['island-bgm-lite.mp3']:
     print(name, (assets / name).stat().st_size)

@@ -54,7 +54,7 @@ const server = http.createServer((req, res) => {
         }
         await page.locator('#cover-title').waitFor({ state: 'visible', timeout: 3000 });
         // 给欢迎层的脚本和 CSS 超时路径留足时间，再检查是否真正露出正文。
-        await page.waitForTimeout(mode === 'stalled-hero' ? 1100 : 2200);
+        await page.waitForTimeout(3200);
         // 不仅检查 DOM 存在，还验证发生首次内容绘制、欢迎层隐藏以及标题日期可见。
         assert.ok(await page.evaluate(() => performance.getEntriesByType('paint').some(entry => entry.name === 'first-contentful-paint')), mode + ': first paint');
         if (mode === 'stalled-hero') assert.deepEqual(audioRequests, [], '封面等待期间不下载音乐');
