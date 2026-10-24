@@ -117,7 +117,7 @@ function meta(html, attribute, key, value) {
     // 对最终压缩后的邀请卡重新识别二维码，验证缩放与压缩没有损坏可扫描性。
     execFileSync("swift", [...swiftArgs, posterFile], {stdio:"inherit"});
 
-    // 把配置同步到页面的 OG 信息、canonical 链接和内嵌邀请图，确保线上与离线内容一致。
+    // 把配置同步到页面 OG 信息、canonical 链接和独立备用图片脚本，确保线上与离线内容一致。
     const htmlFile = path.join(root, "index.html");
     let html = fs.readFileSync(htmlFile, "utf8");
     for (const [attribute,key,value] of [
@@ -133,11 +133,10 @@ function meta(html, attribute, key, value) {
       ["property","og:image:alt","布吉岛来信：新人在海岛花拱下牵手，新郎挥手、新娘手捧鲜花，下方为新人姓名与婚期"],
     ]) html = meta(html, attribute, key, value);
     html = html.replace(/(<link\s+rel="canonical"\s+href=")[^"]*("\s*\/>)/, `$1${escape(config.share.link)}$2`);
-    // 只定位 share-poster 图片标签替换内嵌数据及尺寸，不触碰其他页面插图。
-    html = html.replace(/<img\b[^>]*\bid="share-poster"[^>]*>/, tag => tag
-      .replace(/src="[^"]*"/, `src="${dataURL(posterFile, "image/jpeg")}"`)
-      .replace(/width="[^"]*"/, 'width="1080"')
-      .replace(/height="[^"]*"/, 'height="1620"'));
+    // 备用图片数据独立输出；不再写回首屏 HTML，只在分享原图失败时加载。
+    fs.writeFileSync(path.join(assets, "island-invitation-fallback.js"),
+      "/* 由 scripts/build-share-assets.cjs 生成，仅分享图片加载失败或离线打开时按需加载。 */\n" +
+      "window.BUJI_INVITATION_POSTER = " + JSON.stringify(dataURL(posterFile, "image/jpeg")) + ";\n");
     fs.writeFileSync(htmlFile, html);
     console.log(JSON.stringify({source:"assets/island-cover-hd.png",share:await sharp(shareFile).metadata(),poster:await sharp(posterFile).metadata()},null,2));
   // 即使浏览器截图、图片导出或二维码验证失败，也关闭浏览器并移除本次临时目录。

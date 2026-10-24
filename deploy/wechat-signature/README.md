@@ -87,6 +87,10 @@ open_basedir=/www/wwwroot/wxapi.xxcfun.cn/:/tmp/
 
 参考：[微信 JS-SDK 官方文档](https://developers.weixin.qq.com/doc/service/guide/h5/jssdk.html)。
 
+### 出现备案拦截时
+
+2026-10-24 排查时，`wxapi.xxcfun.cn` 的 HTTPS 握手被重置，HTTP 返回阿里云的 `Non-compliance ICP Filing`（403）。若仍是此状态，先在云服务商确认备案与接入状态，或把服务迁到可正常提供 HTTPS 的主机，再测试 PHP。此时前端签名请求无法到达接口，修改 AppSecret、反复刷新或关闭证书验证都不能修复接入拦截。
+
 ## 6. 测试接口
 
 在电脑或服务器终端执行，先不要改动线上请柬配置：

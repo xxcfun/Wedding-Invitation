@@ -29,8 +29,9 @@ const server = http.createServer((req, res) => {
       const page = await browser.newPage({viewport:{width:390,height:844}, reducedMotion:'reduce',
         userAgent:wechat ? `Mozilla/5.0 (${mode === 'wechat-ios' ? 'iPhone' : 'Linux; Android 16'}) MicroMessenger/8.0.79` : 'Mozilla/5.0'});
       // 同时记录浏览器异常与微信服务请求，确认图片分享不需要加载微信 SDK。
-      const errors = [], sdkRequests = [];
+      const errors = [], sdkRequests = [], posterRequests = [];
       page.on('pageerror', error => errors.push(error.message));
+      page.on('request', request => { if (/island-invitation/.test(request.url())) posterRequests.push(request.url()); });
       page.on('request', request => { if (/wxapi\.|res\d?\.wx\.qq\.com/.test(request.url())) sdkRequests.push(request.url()); });
       await page.addInitScript(() => sessionStorage.setItem('buji-visited', '1'));
       // 隔离地图签名服务；地图请求失败不得影响图片分享。
@@ -38,6 +39,8 @@ const server = http.createServer((req, res) => {
       // 主动阻断独立图片，验证页面可以回退到 HTML 中内嵌的相同邀请卡。
       if (mode === 'image-error') await page.route('**/assets/island-invitation-hd.jpg', route => route.abort());
       await page.goto(mode === 'offline' ? 'file://' + path.join(root, 'index.html') : base + '/?wechat_debug=1');
+      assert.deepEqual(posterRequests, [], '点击分享前不请求邀请图或备用图片脚本');
+      assert.equal(await page.locator('#share-poster').getAttribute('src'), null);
       await page.locator('#share-btn').click();
       await page.waitForFunction(() => document.querySelector('#share-poster').naturalWidth === 1080);
       assert.equal(await page.locator('#share-poster').isVisible(), true);

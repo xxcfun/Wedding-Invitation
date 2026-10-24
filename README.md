@@ -2,7 +2,7 @@
 
 入口为 `index.html`，样式位于 `styles.css`，欢迎加载逻辑位于 `loader.js`，配置与主要交互位于 `main.js`。无需安装依赖，保持这些文件的相对位置即可打开；部署时请一并上传这些文件及 `assets` 目录。Tailwind 已离线编译，不依赖 CDN。
 
-首屏关键样式内嵌在 HTML，完整样式异步加载；三个脚本使用 `defer`，避免慢请求阻塞正文解析。字体按需加载，欢迎遮罩在脚本失效时由 CSS 于 5 秒后退出，减少动态效果模式直接跳过遮罩。运行 `scripts/check-loading.cjs`（需 Playwright 与 Chrome）可检查正常打开、样式卡住、脚本卡住或失败、减少动态效果与禁用脚本场景。
+页面等待完整样式加载后再展示，不提前显示简化样式的内容；三个脚本使用 `defer`，避免慢请求阻塞正文解析。字体按需加载，欢迎遮罩在脚本失效时由 CSS 超时退出，减少动态效果模式直接跳过遮罩。运行 `scripts/check-loading.cjs`（需 Playwright 与 Chrome）可检查正常打开、等待完整样式、脚本卡住或失败、减少动态效果与禁用脚本场景。
 
 手机端为设计基准，桌面居中显示相同的 480px 上限纵向长卷。全页使用浏览器原生滚动，无分页、吸附或整屏切换。
 
@@ -48,14 +48,14 @@
 
 点击页面右下角分享按钮，直接展示 1080×1620 高清邀请图片。微信中长按图片选择「保存图片」，再从微信相册选图发送给朋友或发布朋友圈；其他浏览器提供「保存邀请图片」下载按钮。朋友长按图片内的二维码即可打开完整请柬。
 
-- `assets/island-invitation-hd.jpg`：完整邀请图片；HTML 内嵌同一文件作为离线及请求失败兜底。
+- `assets/island-invitation-hd.jpg`：完整邀请图片；点击分享后才加载；`assets/island-invitation-fallback.js` 提供离线及请求失败的备用数据，也仅按需加载。
 - `CONFIG.share.poster`：展示和下载的邀请图片路径。
 - `CONFIG.share.link`：图片中二维码指向的公开请柬网址。
 - `CONFIG.share.image`：网页 OG 预览图片，与邀请图片分享功能独立。
 
 图片分享无需公众号权限。微信 JS-SDK 与签名接口仅用于地图导航，只申请 `openLocation`，不申请原生分享接口。签名服务配置见 `deploy/wechat-signature/README.md`。
 
-更换姓名、婚期或线上网址时，在可解析 `playwright` 和 `sharp` 的 Node.js 环境运行 `node scripts/build-share-assets.cjs`。脚本使用本机 Chrome、macOS Swift/Core Image 与 Vision，读取当前 `CONFIG` 和 `assets/island-cover-hd.png`，重新导出图片、验证二维码，并同步静态 OG 与 HTML 内嵌邀请图片；可通过 `CHROME_PATH` 指定 Chrome 路径。发布时一并上传新图片、HTML、CSS 和 JS。
+更换姓名、婚期或线上网址时，在可解析 `playwright` 和 `sharp` 的 Node.js 环境运行 `node scripts/build-share-assets.cjs`。脚本使用本机 Chrome、macOS Swift/Core Image 与 Vision，读取当前 `CONFIG` 和 `assets/island-cover-hd.png`，重新导出图片、验证二维码，并同步静态 OG 与备用邀请图脚本；可通过 `CHROME_PATH` 指定 Chrome 路径。发布时一并上传新图片、HTML、CSS 和 JS。
 
 ## 地图与留言说明
 
@@ -95,11 +95,25 @@
 - 当前首屏：`assets/island-cover-hd.webp`（1254×1254、WebP quality 96）；无损原图为 `assets/island-cover-hd.png`。单张完整场景由 `hero-motion.js` 做局部连续形变，不再使用每帧仅 443px 的八帧图。
 - 首屏动效与素材生成说明：`assets/hero-motion-notes.md`。
 - 网页 OG 预览图：`assets/island-share-hd.jpg`。
-- 可转发的高清邀请图卡：`assets/island-invitation-hd.jpg`，同一文件已内嵌为离线兜底。
+- 可转发的高清邀请图卡：`assets/island-invitation-hd.jpg`，同图的离线备用数据位于 `assets/island-invitation-fallback.js`。
 - 旧无人岛插画、旧分享图与旧邀请卡保留为历史素材，当前分享功能不再引用。
 - 素材来源及最终生成提示词：`assets/README.md`。
 - 视觉规范：`DESIGN.md`。
 
 ## 图片分享前端检查
 
-在可解析 `playwright` 的 Node.js 环境运行 `node scripts/check-share.cjs`（可通过 `CHROME_PATH` 指定 Chrome）。覆盖微信和普通浏览器文案、原图下载、图片请求失败的内嵌兜底、离线打开、键盘关闭、焦点恢复和多尺寸布局，并确认不再请求微信 SDK 或签名接口。微信原生长按保存菜单仍以手机实机验证为准。
+在可解析 `playwright` 的 Node.js 环境运行 `node scripts/check-share.cjs`（可通过 `CHROME_PATH` 指定 Chrome）。覆盖微信和普通浏览器文案、原图下载、图片请求失败的按需备用数据、离线打开、键盘关闭、焦点恢复和多尺寸布局，并确认分享不依赖微信 SDK（地图初始化仍会请求签名接口）。微信原生长按保存菜单仍以手机实机验证为准。
+
+
+## 首次访问与网络故障排查
+
+- HTML 不再携带约 460 KB 的 Base64 邀请图，由约 506 KB 减至约 42 KB；分享图片与备用数据均在点击分享后请求。
+- 字体优先加载完整 WOFF2（约 871 KB），保留原有全部 7053 个字符映射；原 TTF（约 1515 KB）仅作旧浏览器回退。同一字体，没有删减汉字。若替换 TTF，可安装 `fonttools[woff]` 后运行 `python3 -m fontTools.ttLib.woff2 compress assets/island-round.ttf -o assets/island-round.woff2` 重新生成。
+- 音乐设置 `preload="none"`，等待封面解码或 3 秒上限后再尝试自动播放；手动点击音乐仍立即响应，不覆盖用户手动暂停意图。
+- 欢迎层取消最少 1.2 秒停留，封面就绪即退出；主脚本最多等封面 800ms，独立脚本与 CSS 仍各自提供超时退场。
+
+2026-10-24 本地冷缓存模拟（1 Mbps 下载、150ms 延迟）中，DOMContentLoaded 从约 11.45 秒降至约 2.03 秒。该数字衡量 HTML 解析和 defer 脚本就绪，不等同于手机实网所有资源加载完成时间，也不能消除主站握手前的网络故障。
+
+微信打开整个请柬就显示“网络出错”，刷新几次可恢复时，需与地图签名错误区分：主页面来自 Vercel，尚未加载网页的失败无法由页面 JavaScript 自动修复。应在故障手机上分别测试 Wi-Fi、移动流量及系统浏览器，核对 DNS、TLS 与托管线路。Vercel 官方说明大陆访问可能出现连接或性能下降：[官方说明](https://vercel.com/kb/guide/accessing-vercel-hosted-sites-from-mainland-china)。如长期面向大陆宾客，需选择线路合适的托管或镜像，再保持 `wedding.xxcfun.cn`、公众号安全域名和签名 URL 一致。
+
+另于同日检查签名域名 `wxapi.xxcfun.cn`：HTTPS 握手被重置；HTTP 403 返回 `Non-compliance ICP Filing` 的阿里云备案拦截页。这是独立的服务端接入故障，不能通过前端重试解决。需在云服务商核对备案/接入状态，或将签名服务迁至可正常提供 HTTPS 的主机。修复后应按 `deploy/wechat-signature/README.md` 的带 Origin 请求验证 JSON，再做手机微信地图联调。

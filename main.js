@@ -547,6 +547,7 @@ const CONFIG = {
   let musicWanted = false,
     musicVersion = 0,
     volumeFrame = 0;
+  audio.preload = "none";
   if (CONFIG.audio) audio.src = CONFIG.audio;
   // 同步按钮读屏状态和音乐装饰类；播放失败时也统一从这里恢复界面。
   function musicUI(on) {
@@ -650,24 +651,70 @@ const CONFIG = {
     musicBtn.removeAttribute("aria-busy");
     toast("音乐暂时无法播放，请检查音频文件");
   });
-  // 打开页面即尝试播放；浏览器拦截时，等待首次交互或微信桥接就绪后重试。
+  // 先把带宽让给封面；用户主动点音乐按钮时仍立即播放，避免延迟任务覆盖手动暂停意图。
   if (CONFIG.audio) {
-    audio.preload = "auto";
-    setMusic(true, true);
+    const initialMusicVersion = musicVersion;
+    Promise.race([
+      $("#hero-image").decode().catch(() => {}),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]).then(() => {
+      if (musicVersion === initialMusicVersion) setMusic(true, true);
+    });
   }
   // 图片邀请分享：微信原生长按保存，不依赖公众号或微信 JS-SDK。
   const inWechat = /MicroMessenger/i.test(navigator.userAgent);
   const sharePoster = $("#share-poster");
   const shareSave = $("#share-save");
-  // HTML 内嵌完整邀请图片用于离线兜底；线上优先使用独立图片，便于浏览器缓存。
-  const embeddedPoster = sharePoster.getAttribute("src");
-  shareSave.href = embeddedPoster;
-  if (/^https?:$/.test(location.protocol) && CONFIG.share.poster) {
-    sharePoster.addEventListener("error", () => {
-      sharePoster.src = embeddedPoster;
-      shareSave.href = embeddedPoster;
-    }, { once: true });
+  // 分享不占用首屏带宽：点击打开时才请求原图；离线或原图请求失败时再读取备用脚本。
+  let posterRequested = false;
+  let posterFallbackPromise;
+  function loadPosterFallback() {
+    if (window.BUJI_INVITATION_POSTER) return Promise.resolve(window.BUJI_INVITATION_POSTER);
+    if (posterFallbackPromise) return posterFallbackPromise;
+    posterFallbackPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      const timer = setTimeout(() => finish(new Error("poster_timeout")), 12000);
+      function finish(error) {
+        clearTimeout(timer);
+        script.onload = script.onerror = null;
+        script.remove();
+        if (error) reject(error);
+        else resolve(window.BUJI_INVITATION_POSTER);
+      }
+      script.src = "assets/island-invitation-fallback.js";
+      script.onload = () => finish(window.BUJI_INVITATION_POSTER ? null : new Error("poster_missing"));
+      script.onerror = () => finish(new Error("poster_load_failed"));
+      document.head.append(script);
+    }).catch((error) => {
+      posterFallbackPromise = null;
+      throw error;
+    });
+    return posterFallbackPromise;
+  }
+  async function usePosterFallback() {
+    try {
+      const source = await loadPosterFallback();
+      sharePoster.src = source;
+      shareSave.href = source;
+    } catch {
+      // 下次打开分享可重新尝试；不影响关闭弹窗或继续阅读请柬。
+      posterRequested = false;
+      toast("邀请图片暂未加载成功，请关闭后重新打开分享");
+    }
+  }
+  function ensureSharePoster() {
+    if (posterRequested) return;
+    posterRequested = true;
+    if (!/^https?:$/.test(location.protocol)) {
+      void usePosterFallback();
+      return;
+    }
     const posterURL = new URL(CONFIG.share.poster, location.href).href;
+    sharePoster.onerror = () => {
+      // 切备用图片前移除错误回调，避免备用数据解码失败时形成循环。
+      sharePoster.onerror = null;
+      void usePosterFallback();
+    };
     sharePoster.src = posterURL;
     shareSave.href = posterURL;
   }
@@ -680,6 +727,7 @@ const CONFIG = {
     ? "长按图片 · 选择「保存图片」"
     : "点击「保存邀请图片」，即可下载高清原图";
   $("#share-btn").onclick = () => {
+    ensureSharePoster();
     openLayer($("#share-guide"), "#share-close");
     $("#share-guide").scrollTop = 0;
   };
@@ -1252,30 +1300,19 @@ const CONFIG = {
       }
     }
   });
-  // 加载层不锁定滚动；等待首屏解码，设置上限，加载失败亦可进入。首次以会话为单位。
+  // 欢迎层不再强制停留：封面就绪即退场，慢网最多等待 800ms，文字可先阅读。
   async function finishLoading() {
     const loader = $("#loader");
     if (loader.hidden) return;
-    const start = performance.now();
-    // 等待封面解码或达到 2.2 秒上限；即便图片请求悬挂，也不会一直挡住正文。
     await Promise.race([
-      $("#hero-image")
-        .decode()
-        .catch(() => {}),
-      new Promise((r) => setTimeout(r, 2200)),
+      $("#hero-image").decode().catch(() => {}),
+      new Promise((resolve) => setTimeout(resolve, 800)),
     ]);
-    const elapsed = performance.now() - start;
-    setTimeout(
-      () => {
-        loader.classList.add("hidden-loader");
-        try {
-          sessionStorage.setItem("buji-visited", "1");
-        } catch {}
-        setTimeout(() => (loader.hidden = true), 750);
-      },
-      // 正常情况下至少保留 1.2 秒开场展示时间；图片等待已超过时则立即开始退场。
-      Math.max(0, 1200 - elapsed),
-    );
+    loader.classList.add("hidden-loader");
+    try {
+      sessionStorage.setItem("buji-visited", "1");
+    } catch {}
+    setTimeout(() => (loader.hidden = true), 250);
   }
   finishLoading();
   // 页面进入后台时暂停纯装饰 CSS 动画，音频按用户开启状态继续。

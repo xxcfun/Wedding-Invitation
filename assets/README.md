@@ -19,8 +19,9 @@ Use case: stylized-concept. Asset type: hero illustration for an original mobile
 
 ## 使用说明
 
-当前邀请图卡的离线版本已经内嵌。正式部署时，同时上传 `island-share-hd.jpg` 作为公开分享图片，以及 `island-invitation-hd.jpg` 用于微信长按保存。两张图片均复用现有高清素材，没有重新生成角色或场景。运行 `scripts/build-share-assets.cjs` 可从当前配置重建图片、静态 OG 和内嵌邀请卡；二维码使用 macOS Core Image 标准编码，并通过 Vision 解码验证。没有公众号签名服务时，分享采用图片邀请卡。照片可在 `CONFIG.photos` 逐项替换。
+当前邀请图卡的离线备用数据放在独立的 `island-invitation-fallback.js` 中，仅在打开分享且原图失败或离线时加载，避免增加首屏 HTML 体积。正式部署时，同时上传 `island-share-hd.jpg` 作为公开分享图片，以及 `island-invitation-hd.jpg` 用于微信长按保存。两张图片均复用现有高清素材，没有重新生成角色或场景。运行 `scripts/build-share-assets.cjs` 可从当前配置重建图片、静态 OG 和备用邀请图脚本；二维码使用 macOS Core Image 标准编码，并通过 Vision 解码验证。没有公众号签名服务时，分享采用图片邀请卡。照片可在 `CONFIG.photos` 逐项替换。
 
+- `island-round.woff2`：从原 TTF 转换的完整压缩字库，优先供网页加载；保留全部字符映射和字体许可。
 - `island-round.ttf`：ZCOOL KuaiLe 完整字库，来自 Google Fonts 官方仓库，替代原有内嵌子集；许可见 `island-font-OFL.txt`。
 
 - `island-bgm.mp3`：用户提供的 Nintendo Sound Team - Welcome Horizons，点击跳转请柬正文时开始循环播放；音乐按钮可随时暂停或继续，手动暂停后不会因再次跳转而重启。

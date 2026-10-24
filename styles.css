@@ -164,7 +164,9 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("assets/island-round.ttf") format("truetype");
+  /* WOFF2 保留完整字形与同一字体，优先使用压缩版；旧浏览器仍可回退到 TTF。 */
+  src: url("assets/island-round.woff2") format("woff2"),
+    url("assets/island-round.ttf") format("truetype");
 }
 
 /* 主题令牌集中维护文字、纸张、木色、阴影和字体；调整整体配色优先修改这里。 */
@@ -2202,9 +2204,9 @@ body::before {
   justify-content: center;
   background: linear-gradient(#dceff7, #e1f0ed);
   z-index: 100;
-  transition: opacity 0.7s;
+  transition: opacity 0.2s;
   /* 脚本缺失或执行失败时，遮罩也会自行退出。 */
-  animation: loader-timeout 0s 5s forwards;
+  animation: loader-timeout 0s 1.5s forwards;
   pointer-events: none;
 }
 /* CSS 自身的加载超时兜底，脚本未执行时也能让欢迎遮罩退出。 */
