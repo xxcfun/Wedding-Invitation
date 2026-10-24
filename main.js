@@ -430,11 +430,25 @@ const CONFIG = {
           timestamp: signature.timestamp,
           nonceStr: signature.nonceStr,
           signature: signature.signature,
-          // 仅申请查看位置的权限；酒店坐标已知，无需调用 getLocation 获取访客位置。
-          jsApiList: ["openLocation"],
+          // 地图和分享共用同一次签名鉴权；分享接口需公众号开通相应权限。
+          jsApiList: ["openLocation", "updateAppMessageShareData", "updateTimelineShareData"],
         });
       });
       wechatMapState = "ready";
+      // 在用户打开分享菜单前设置；单个分享接口失败不影响酒店导航。
+      const shareData = {
+        title: CONFIG.share.title,
+        desc: CONFIG.share.description,
+        link: CONFIG.share.link,
+        imgUrl: CONFIG.share.image,
+      };
+      for (const api of ["updateAppMessageShareData", "updateTimelineShareData"]) {
+        try {
+          if (typeof wx[api] === "function") wx[api]({ ...shareData });
+        } catch (error) {
+          console.warn("微信分享设置失败：", api, error);
+        }
+      }
     } catch {
       // 后台初始化失败时不打断阅读；访客点击导航时再显示提示并发起重试。
       wechatMapState = "error";

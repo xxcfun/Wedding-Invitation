@@ -19,6 +19,7 @@ const server = http.createServer((req, res) => {
 const sdk = `
 window.mapCalls = [];
 window.configCalls = [];
+window.shareCalls = [];
 let ready, error;
 window.releaseMap = () => { window.mapReady = true; ready(); };
 window.wx = {
@@ -31,6 +32,8 @@ window.wx = {
       else if (window.testMode !== 'loading') window.releaseMap();
     });
   },
+  updateAppMessageShareData: value => shareCalls.push({api: "friend", ...value}),
+  updateTimelineShareData: value => shareCalls.push({api: "timeline", ...value}),
   openLocation: value => {
     const {fail, ...location} = value;
     mapCalls.push(location);
@@ -91,7 +94,15 @@ window.wx = {
         assert.equal(calls.length, 1);
         assert.deepEqual({...calls[0]}, {latitude:36.694075, longitude:118.457025, name:'海岱禧合婚礼艺术中心', address:'山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）', scale:16, infoUrl:'https://wedding.xxcfun.cn'});
         const configs = await page.evaluate(() => configCalls);
-        assert.deepEqual(configs.at(-1).jsApiList, ['openLocation']);
+        assert.deepEqual(configs.at(-1).jsApiList, ['openLocation', 'updateAppMessageShareData', 'updateTimelineShareData']);
+        const shares = await page.evaluate(() => shareCalls);
+        assert.deepEqual(shares.map(value => value.api), ['friend', 'timeline']);
+        for (const share of shares) {
+          assert.equal(share.title, '叮～有一封布吉岛来信📩');
+          assert.equal(share.link, 'https://wedding.xxcfun.cn');
+          assert.equal(share.imgUrl, 'https://wedding.xxcfun.cn/assets/island-share-hd.jpg');
+          assert.ok(share.desc.includes('2026年11月4日'));
+        }
         assert.equal(configs.at(-1).debug, false);
         assert.ok(signatures.every(url => url === base + '/?from=group&value=a%2Fb'));
         if (mode === 'open-error') assert.match(await page.locator('#toast').textContent(), /地图打开失败/);
