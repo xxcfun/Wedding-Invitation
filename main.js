@@ -7,8 +7,8 @@
 const CONFIG = {
   groom: "刁勇辰", // 可修改：新郎姓名
   bride: "李汝静", // 可修改：新娘姓名
-  date: "2026-11-04T11:00:00+08:00", // 可修改：婚礼日期及开始时间，保留 +08:00 时区
-  timeLabel: "中午11点", // 可修改：时间展示文案；留空时自动显示婚期中的小时和分钟
+  date: "2026-11-04T11:28:00+08:00", // 可修改：婚礼日期及开始时间，保留 +08:00 时区
+  timeLabel: "中午11点28分", // 可修改：时间展示文案；留空时自动显示婚期中的小时和分钟
   lunarDate: "丙午年九月廿六", // 可修改：农历日期；更换婚期时请同步修改
   venue: "海岱禧合酒店", // 可修改：婚宴地点
   venueFull: "海岱禧合婚礼艺术中心", // 可修改：酒店完整名称
@@ -26,22 +26,56 @@ const CONFIG = {
       title: "宾朋莅座",
       note: "亲朋相聚，静候幸福开场",
     },
-    { time: "12:00", title: "吉时肇礼", note: "以爱之名，许下余生" },
-    { time: "12:30", title: "喜筵开酌", note: "把祝福藏进每一次碰杯" },
+    { time: "11:28", title: "吉时肇礼", note: "以爱之名，许下余生" },
+    { time: "12:08", title: "喜筵开酌", note: "把祝福藏进每一次碰杯" },
     { time: "13:00", title: "华堂留影", note: "带着笑容，留下今日份合照" },
     { time: "14:00", title: "茶点叙欢", note: "一盏清茶，共叙欢喜时光" },
   ],
   photos: [
     // 六张婚照按上传顺序展示。
-    { src: "assets/wedding-album-01.webp", title: "花海里的我们", icon: "flower", palette: "garden" },
-    { src: "assets/wedding-album-02.webp", title: "花路与飞纱", icon: "shell", palette: "garden" },
-    { src: "assets/wedding-album-03.webp", title: "晴日里的誓言", icon: "sun", palette: "garden" },
-    { src: "assets/wedding-album-04.webp", title: "牵手，走向余生", icon: "heart", palette: "garden" },
-    { src: "assets/wedding-album-05.webp", title: "把幸福举高高", icon: "rings", palette: "garden" },
-    { src: "assets/wedding-album-06.webp", title: "阳光下的我们", icon: "camera", palette: "garden" },
+    {
+      src: "assets/wedding-album-01.webp",
+      title: "花海里的我们",
+      icon: "flower",
+      palette: "garden",
+    },
+    {
+      src: "assets/wedding-album-02.webp",
+      title: "花路与飞纱",
+      icon: "shell",
+      palette: "garden",
+    },
+    {
+      src: "assets/wedding-album-03.webp",
+      title: "晴日里的誓言",
+      icon: "sun",
+      palette: "garden",
+    },
+    {
+      src: "assets/wedding-album-04.webp",
+      title: "牵手，走向余生",
+      icon: "heart",
+      palette: "garden",
+    },
+    {
+      src: "assets/wedding-album-05.webp",
+      title: "把幸福举高高",
+      icon: "rings",
+      palette: "garden",
+    },
+    {
+      src: "assets/wedding-album-06.webp",
+      title: "阳光下的我们",
+      icon: "camera",
+      palette: "garden",
+    },
   ],
   sampleWishes: [
     // 根据角色特点创作的婚礼祝福，并非游戏原台词。
+    {
+      name: "西施惠",
+      text: "各位居民请注意，今天岛上有一件特别幸福的事！恭喜两位结婚！那个……光是看着你们，我也忍不住笑起来了呢！",
+    },
     {
       name: "狸克",
       text: "两位的新生活计划，今天正式开工了呢！祝你们把小家经营得暖暖的，幸福的利息每天都在增加，是说！",
@@ -49,10 +83,6 @@ const CONFIG = {
     {
       name: "傅达",
       text: "呼呼！如此珍贵的幸福时刻，真想好好珍藏起来呢。愿两位共同发现生活中的美好，让回忆的馆藏越来越丰富！",
-    },
-    {
-      name: "西施惠",
-      text: "各位居民请注意，今天岛上有一件特别幸福的事！恭喜两位结婚！那个……光是看着你们，我也忍不住笑起来了呢！",
     },
   ],
   share: {
@@ -267,17 +297,23 @@ const CONFIG = {
     $("#photo-grid").append(btn);
   });
   // 限制婚照的常规保存操作；保留相册点击、滑动和键盘浏览。
-  const protectedPhotoSelector = ".photo-card, #lightbox-image, .wedding-portrait-image";
+  const protectedPhotoSelector =
+    ".photo-card, #lightbox-image, .wedding-portrait-image";
   for (const eventName of ["contextmenu", "dragstart"]) {
     document.addEventListener(eventName, (event) => {
-      if (event.target instanceof Element && event.target.closest(protectedPhotoSelector)) {
+      if (
+        event.target instanceof Element &&
+        event.target.closest(protectedPhotoSelector)
+      ) {
         event.preventDefault();
       }
     });
   }
-  document.querySelectorAll("#lightbox-image, .wedding-portrait-image").forEach((img) => {
-    img.draggable = false;
-  });
+  document
+    .querySelectorAll("#lightbox-image, .wedding-portrait-image")
+    .forEach((img) => {
+      img.draggable = false;
+    });
   // 微信使用内置地图位置页；其他手机浏览器保留高德原生导航。
   const { longitude: lng, latitude: lat } = CONFIG;
   const name = encodeURIComponent(CONFIG.venueFull);
@@ -307,7 +343,8 @@ const CONFIG = {
       }
       script.src = "https://res.wx.qq.com/open/js/jweixin-1.6.0.js";
       script.async = true;
-      script.onload = () => finish(window.wx?.config ? null : new Error("sdk_missing"));
+      script.onload = () =>
+        finish(window.wx?.config ? null : new Error("sdk_missing"));
       script.onerror = () => finish(new Error("sdk_load_error"));
       document.head.append(script);
     }).catch((error) => {
@@ -322,7 +359,8 @@ const CONFIG = {
     if (wechatMapState === "loading" || wechatMapState === "ready") return;
     wechatMapState = "loading";
     try {
-      if (!/^https?:$/.test(location.protocol)) throw new Error("https_required");
+      if (!/^https?:$/.test(location.protocol))
+        throw new Error("https_required");
       const endpoint = new URL(CONFIG.wechat.signatureEndpoint);
       // 用查询参数传完整网页地址，编码交给 URL API；签名计算及公众号密钥均留在服务端。
       endpoint.searchParams.set("url", wechatPageURL);
@@ -343,14 +381,28 @@ const CONFIG = {
         clearTimeout(timer);
       }
       // 先检查必要字段，避免把错误响应当成签名继续提交给微信。
-      if (!signature.appId || !signature.nonceStr || !signature.timestamp || !signature.signature)
+      if (
+        !signature.appId ||
+        !signature.nonceStr ||
+        !signature.timestamp ||
+        !signature.signature
+      )
         throw new Error("signature_invalid");
       const wx = await loadWeChatSDK();
       await new Promise((resolve, reject) => {
         // SDK 文件加载成功不等于鉴权成功；必须等微信触发 ready 后才能打开地图。
-        const timer = setTimeout(() => reject(new Error("config_timeout")), 12000);
-        wx.ready(() => { clearTimeout(timer); resolve(); });
-        wx.error(() => { clearTimeout(timer); reject(new Error("config_failed")); });
+        const timer = setTimeout(
+          () => reject(new Error("config_timeout")),
+          12000,
+        );
+        wx.ready(() => {
+          clearTimeout(timer);
+          resolve();
+        });
+        wx.error(() => {
+          clearTimeout(timer);
+          reject(new Error("config_failed"));
+        });
         wx.config({
           debug: false,
           appId: signature.appId,
@@ -358,7 +410,11 @@ const CONFIG = {
           nonceStr: signature.nonceStr,
           signature: signature.signature,
           // 地图和分享共用同一次签名鉴权；分享接口需公众号开通相应权限。
-          jsApiList: ["openLocation", "updateAppMessageShareData", "updateTimelineShareData"],
+          jsApiList: [
+            "openLocation",
+            "updateAppMessageShareData",
+            "updateTimelineShareData",
+          ],
         });
       });
       wechatMapState = "ready";
@@ -369,7 +425,10 @@ const CONFIG = {
         link: CONFIG.share.link,
         imgUrl: CONFIG.share.image,
       };
-      for (const api of ["updateAppMessageShareData", "updateTimelineShareData"]) {
+      for (const api of [
+        "updateAppMessageShareData",
+        "updateTimelineShareData",
+      ]) {
         try {
           if (typeof wx[api] === "function") wx[api]({ ...shareData });
         } catch (error) {
@@ -405,9 +464,11 @@ const CONFIG = {
         if (wechatMapState !== "ready") {
           const failed = wechatMapState === "error";
           void prepareWeChatMap();
-          toast(failed
-            ? "地图暂未连接，正在重试；也可点击手绘地图复制酒店名称"
-            : "地图正在准备，请稍后再点一次导航前往");
+          toast(
+            failed
+              ? "地图暂未连接，正在重试；也可点击手绘地图复制酒店名称"
+              : "地图正在准备，请稍后再点一次导航前往",
+          );
           // 不在异步初始化结束后自动打开；让访客再次点击，保留明确的用户操作时机。
           return;
         }
@@ -422,7 +483,10 @@ const CONFIG = {
             // 位置页初始缩放级别和附带的请柬链接。
             scale: 16,
             infoUrl: CONFIG.share.link,
-            fail: () => toast("地图打开失败，可点击手绘地图复制酒店名称，或在浏览器打开请柬"),
+            fail: () =>
+              toast(
+                "地图打开失败，可点击手绘地图复制酒店名称，或在浏览器打开请柬",
+              ),
           });
         } catch {
           // 兼容 SDK 调用同步抛错的情况；异步失败由上面的 fail 回调处理。
@@ -595,9 +659,12 @@ const CONFIG = {
   // 自动音乐等待封面完成解码；慢网不设超时抢占带宽，主动点击仍立即响应。
   if (CONFIG.audio) {
     const initialMusicVersion = musicVersion;
-    $("#hero-image").decode().catch(() => {}).then(() => {
-      if (musicVersion === initialMusicVersion) setMusic(true, true);
-    });
+    $("#hero-image")
+      .decode()
+      .catch(() => {})
+      .then(() => {
+        if (musicVersion === initialMusicVersion) setMusic(true, true);
+      });
   }
   // 图片邀请分享：微信原生长按保存，不依赖公众号或微信 JS-SDK。
   const inWechat = /MicroMessenger/i.test(navigator.userAgent);
@@ -607,11 +674,15 @@ const CONFIG = {
   let posterRequested = false;
   let posterFallbackPromise;
   function loadPosterFallback() {
-    if (window.BUJI_INVITATION_POSTER) return Promise.resolve(window.BUJI_INVITATION_POSTER);
+    if (window.BUJI_INVITATION_POSTER)
+      return Promise.resolve(window.BUJI_INVITATION_POSTER);
     if (posterFallbackPromise) return posterFallbackPromise;
     posterFallbackPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      const timer = setTimeout(() => finish(new Error("poster_timeout")), 12000);
+      const timer = setTimeout(
+        () => finish(new Error("poster_timeout")),
+        12000,
+      );
       function finish(error) {
         clearTimeout(timer);
         script.onload = script.onerror = null;
@@ -620,7 +691,10 @@ const CONFIG = {
         else resolve(window.BUJI_INVITATION_POSTER);
       }
       script.src = "assets/island-invitation-fallback.js";
-      script.onload = () => finish(window.BUJI_INVITATION_POSTER ? null : new Error("poster_missing"));
+      script.onload = () =>
+        finish(
+          window.BUJI_INVITATION_POSTER ? null : new Error("poster_missing"),
+        );
       script.onerror = () => finish(new Error("poster_load_failed"));
       document.head.append(script);
     }).catch((error) => {
@@ -1244,10 +1318,22 @@ const CONFIG = {
     if (loader.hidden) return;
     await Promise.all([
       Promise.race([
-        $("#hero-image").decode().catch(() => {}),
+        $("#hero-image")
+          .decode()
+          .catch(() => {}),
         new Promise((resolve) => setTimeout(resolve, 800)),
       ]),
-      new Promise((resolve) => setTimeout(resolve, Math.max(0, 2000 - (performance.now() - (window.invitationLoadingStarted ?? performance.now()))))),
+      new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          Math.max(
+            0,
+            2000 -
+              (performance.now() -
+                (window.invitationLoadingStarted ?? performance.now())),
+          ),
+        ),
+      ),
     ]);
     loader.classList.add("hidden-loader");
     try {
