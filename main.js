@@ -526,7 +526,7 @@ const CONFIG = {
     ];
     ["days", "hours", "minutes", "seconds"].forEach((id, i) => {
       const n = $("#" + id),
-        value = String(values[i]).padStart(i ? 2 : 3, "0");
+        value = i === 0 ? String(values[i]) : String(values[i]).padStart(2, "0");
       if (n.textContent !== value) {
         n.textContent = value;
         n.classList.remove("tick");
