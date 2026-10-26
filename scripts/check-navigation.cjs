@@ -92,7 +92,7 @@ window.wx = {
         await navigate.click();
         const calls = await page.evaluate(() => mapCalls);
         assert.equal(calls.length, 1);
-        assert.deepEqual({...calls[0]}, {latitude:36.694075, longitude:118.457025, name:'海岱禧合婚礼艺术中心', address:'山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）', scale:16, infoUrl:'https://wedding.xxcfun.cn'});
+        assert.deepEqual({...calls[0]}, {latitude:36.694075, longitude:118.457025, name:'海岱禧合婚礼艺术中心', address:'山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）· 十里红妆厅', scale:16, infoUrl:'https://wedding.xxcfun.cn'});
         const configs = await page.evaluate(() => configCalls);
         assert.deepEqual(configs.at(-1).jsApiList, ['openLocation', 'updateAppMessageShareData', 'updateTimelineShareData']);
         const shares = await page.evaluate(() => shareCalls);
