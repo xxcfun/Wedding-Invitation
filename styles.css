@@ -2652,3 +2652,16 @@ body::before {
 
 .map-caption { text-align: center; font-size: 12px; line-height: 1.8; margin: 12px 0 24px; color: #526548; }
 .form-help { font-size: 12px; text-align: left; }
+
+/* 共享留言：保留木板与便签外观，补齐网络状态及分页。 */
+.wish-status { color: var(--ink); font-size: 14px; line-height: 1.7; text-align: center; margin: 18px 0 8px; }
+.wish-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.wish-actions .btn { min-height: 44px; font-size: 14px; }
+.wish-actions [hidden] { display: none; }
+.wishes button:disabled { opacity: .6; cursor: wait; }
+.note p { white-space: pre-wrap; }
+.note-author, .note-date { font-size: 12px; }
+.note-date { display: block; text-align: right; color: #52614b; margin-top: 4px; }
+.islander-wishes { margin-top: 20px; }
+.islander-wishes summary { cursor: pointer; min-height: 44px; padding: 12px 4px; font-size: 14px; }
+.islander-wishes .notes { padding: 12px 5px; }

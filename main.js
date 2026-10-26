@@ -70,6 +70,10 @@ const CONFIG = {
       palette: "garden",
     },
   ],
+  wishes: {
+    // 留空时使用同源 /api/wishes；本地预览可用 ?wishesApi 覆盖仅回环地址。
+    endpoint: "https://wxapi.xxcfun.cn/api/wishes",
+  },
   sampleWishes: [
     // 根据角色特点创作的婚礼祝福，并非游戏原台词。
     {
@@ -839,90 +843,133 @@ const CONFIG = {
     },
     { passive: true },
   );
-  // 祝福公告板：最多 50 条本机留言。明确显示保存范围，未假装存在服务器。
-  const savedWishes = storage.get("buji-wishes", []);
-  // 读取历史留言后重新校验字段并限制长度；本机存储也可能被旧版本或其他脚本改写。
-  let wishes = (Array.isArray(savedWishes) ? savedWishes : [])
-    .filter(
-      (x) => x && typeof x.name === "string" && typeof x.text === "string",
-    )
-    .slice(0, 50)
-    .map((x) => ({
-      name: x.name.slice(0, 20),
-      text: x.text.slice(0, 160),
-    }));
-  // 创建一张纯文本祝福便签；fresh 决定是否附加新留言贴入动画。
+  // 公共留言以服务端为准；旧 buji-wishes 不自动上传。
+  const wishForm = $("#wish-form"), nameInput = $("#guest-name"), textInput = $("#guest-wish");
+  const sendButton = wishForm.querySelector('[type="submit"]');
+  const statusNode = $("#wish-status"), moreButton = $("#wish-more"), refreshButton = $("#wish-refresh");
+  let wishes = [], cursor = null, loadingWishes = false, sendingWish = false, pendingWish = null;
+  let endpoint = CONFIG.wishes.endpoint || "/api/wishes";
+  if (["localhost", "127.0.0.1"].includes(location.hostname)) {
+    const override = new URLSearchParams(location.search).get("wishesApi");
+    if (override) {
+      try {
+        const url = new URL(override);
+        if (["localhost", "127.0.0.1"].includes(url.hostname) && ["http:", "https:"].includes(url.protocol)) endpoint = url.href;
+      } catch { /* 无效的本地调试地址使用正式配置。 */ }
+    }
+  }
+  const rememberedName = storage.get("buji-guest-name", "");
+  if (typeof rememberedName === "string") nameInput.value = rememberedName.slice(0, 20);
+  const draft = storage.get("buji-wish-draft", null);
+  if (draft && typeof draft.name === "string" && typeof draft.text === "string") {
+    nameInput.value = draft.name.slice(0, 20); textInput.value = draft.text.slice(0, 160);
+    if (typeof draft.requestId === "string") pendingWish = draft;
+  }
+  function saveWishDraft() {
+    const name = nameInput.value.trim(), text = textInput.value.trim();
+    if (pendingWish && (pendingWish.name !== name || pendingWish.text !== text)) pendingWish = null;
+    storage.set("buji-wish-draft", { name, text, requestId: pendingWish?.requestId });
+  }
+  nameInput.addEventListener("input", saveWishDraft);
+  textInput.addEventListener("input", saveWishDraft);
   function wishNode(w, fresh = false) {
     const n = el("article", "note" + (fresh ? " new-note" : ""));
+    const time = new Date(w.createdAt);
     n.append(el("p", "", w.text), el("div", "note-author", "— " + w.name));
+    if (Number.isFinite(time.getTime())) {
+      const date = el("time", "note-date", time.toLocaleDateString("zh-CN", { timeZone: "Asia/Shanghai" }));
+      date.dateTime = w.createdAt; n.append(date);
+    }
     return n;
   }
-  // 优先展示本机新留言，再补示例祝福；公告板最多显示六张，存储仍保留五十条。
-  function renderWishes() {
-    const notes = $("#notes");
-    notes.replaceChildren();
-    [...wishes, ...CONFIG.sampleWishes]
-      .slice(0, 6)
-      .forEach((w) => notes.append(wishNode(w)));
+  function renderWishes(freshId) {
+    $("#notes").replaceChildren(...wishes.map(w => wishNode(w, w.id === freshId)));
   }
-  renderWishes();
-  // 必填校验同时更新可见错误和 aria-invalid，让读屏与视觉反馈保持一致。
-  function validateField(input, errorID, message) {
-    const empty = !input.value.trim();
-    $("#" + errorID).textContent = empty ? message : "";
-    input.setAttribute("aria-invalid", String(empty));
-    return !empty;
+  // 示例与公开留言分开，不伪装成真人提交。
+  $("#islander-notes").replaceChildren(...CONFIG.sampleWishes.map(w => wishNode(w)));
+  async function wishRequest(url, options = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal, credentials: "omit", cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) {
+        const messages = { invalid_name: "名字请填写 1–20 字。", invalid_text: "祝福请填写 1–160 字。", request_conflict: "提交标识冲突，请修改内容后重试。", rate_limited: "留言有些频繁，请稍后再试。" };
+        throw new Error(messages[data.error] || "留言服务暂时不可用，请稍后重试。");
+      }
+      return data;
+    } catch (error) {
+      if (error.name === "AbortError" || error instanceof TypeError) throw new Error(options.method === "POST" ? "暂未确认提交结果，请保留内容并重试，不会重复发布。" : "留言加载失败，请检查网络后重试。");
+      throw error;
+    } finally { clearTimeout(timer); }
   }
-  $("#guest-name").addEventListener("blur", () =>
-    validateField(
-      $("#guest-name"),
-      "name-error",
-      "请留下你的名字，让我们知道这份心意来自谁。",
-    ),
-  );
-  $("#guest-wish").addEventListener("blur", () =>
-    validateField(
-      $("#guest-wish"),
-      "wish-error",
-      "写一句祝福，再把它贴上小岛吧。",
-    ),
-  );
-  // 表单仅在本机处理：校验、截断、保存、重绘；不向服务器发送访客信息。
-  $("#wish-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const nameOK = validateField(
-        $("#guest-name"),
-        "name-error",
-        "请留下你的名字，让我们知道这份心意来自谁。",
-      ),
-      wishOK = validateField(
-        $("#guest-wish"),
-        "wish-error",
-        "写一句祝福，再把它贴上小岛吧。",
-      );
-    if (!nameOK || !wishOK) {
-      (!nameOK ? $("#guest-name") : $("#guest-wish")).focus();
-      return;
+  async function loadWishes(reset = false) {
+    if (loadingWishes) return;
+    const priorIds = new Set(wishes.map(w => w.id));
+    loadingWishes = true; moreButton.disabled = true; refreshButton.disabled = true;
+    $("#notes").setAttribute("aria-busy", "true"); statusNode.textContent = "正在收集小岛上的祝福…";
+    try {
+      const url = new URL(endpoint, location.href); url.searchParams.set("limit", "6");
+      if (!reset && cursor) url.searchParams.set("before", cursor);
+      const data = await wishRequest(url.href);
+      if (!Array.isArray(data.items)) throw new Error("留言数据暂时无法读取，请重试。");
+      const incoming = data.items.filter(w => w && Number.isSafeInteger(w.id) && typeof w.name === "string" && typeof w.text === "string");
+      const merged = reset ? [...incoming, ...wishes.filter(w => !priorIds.has(w.id))] : [...wishes, ...incoming];
+      wishes = [...new Map(merged.map(w => [w.id, w])).values()].sort((a, b) => b.id - a.id);
+      cursor = data.nextCursor; renderWishes(); moreButton.hidden = !cursor;
+      statusNode.textContent = wishes.length ? "每一份祝福，都留在这里。" : "还没有公开留言，来留下第一份祝福吧。";
+      refreshButton.textContent = "刷新祝福";
+    } catch (error) {
+      statusNode.textContent = error.message; refreshButton.textContent = "重试加载";
+    } finally {
+      loadingWishes = false; moreButton.disabled = false; refreshButton.disabled = false; $("#notes").setAttribute("aria-busy", "false");
     }
-    const w = {
-      name: $("#guest-name").value.trim().slice(0, 20),
-      text: $("#guest-wish").value.trim().slice(0, 160),
-    };
-    wishes.unshift(w);
-    wishes = wishes.slice(0, 50);
-    // 存储失败也保留当前页面内存中的留言，通过提示明确它只在本次浏览可见。
-    const saved = storage.set("buji-wishes", wishes);
-    renderWishes();
-    $("#notes").firstElementChild.classList.add("new-note");
-    $("#wish-form").reset();
-    $("#guest-name").removeAttribute("aria-invalid");
-    $("#guest-wish").removeAttribute("aria-invalid");
-    $("#form-error").textContent = saved
-      ? ""
-      : "当前浏览器无法保存留言，本次浏览仍可查看。";
-    toast(
-      saved ? "祝福已经贴上小岛，心意收到啦！" : "祝福已展示，本次浏览可见",
-    );
+  }
+  moreButton.addEventListener("click", () => loadWishes());
+  refreshButton.addEventListener("click", () => loadWishes(true));
+  if ("IntersectionObserver" in window) {
+    const wishObserver = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) { wishObserver.disconnect(); loadWishes(true); }
+    }, { rootMargin: "300px" });
+    wishObserver.observe($("#wishes"));
+  } else loadWishes(true);
+  function validateField(input, errorID, message) {
+    const value = input.value.trim();
+    const valid = value.length > 0 && value.length <= input.maxLength;
+    $("#" + errorID).textContent = valid ? "" : message;
+    input.setAttribute("aria-invalid", String(!valid)); return valid;
+  }
+  // 输入修正时立即消除已有错误，避免点击提交时 blur 清错导致按钮移位。
+  nameInput.addEventListener("input", () => { if (nameInput.getAttribute("aria-invalid") === "true") validateField(nameInput, "name-error", "请留下 1–20 字的称呼。"); });
+  textInput.addEventListener("input", () => { if (textInput.getAttribute("aria-invalid") === "true") validateField(textInput, "wish-error", "请写下 1–160 字的祝福。"); });
+  nameInput.addEventListener("blur", () => validateField(nameInput, "name-error", "请留下 1–20 字的称呼。"));
+  textInput.addEventListener("blur", () => validateField(textInput, "wish-error", "请写下 1–160 字的祝福。"));
+  wishForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (sendingWish) return;
+    const nameOK = validateField(nameInput, "name-error", "请留下 1–20 字的称呼。"), textOK = validateField(textInput, "wish-error", "请写下 1–160 字的祝福。");
+    if (!nameOK || !textOK) { (!nameOK ? nameInput : textInput).focus(); return; }
+    if (!pendingWish) pendingWish = { name: nameInput.value.trim(), text: textInput.value.trim(), requestId: crypto.randomUUID() };
+    saveWishDraft();
+    sendingWish = true; sendButton.disabled = true; nameInput.readOnly = true; textInput.readOnly = true;
+    wishForm.setAttribute("aria-busy", "true"); sendButton.textContent = "正在贴上小岛…"; $("#form-error").textContent = "";
+    try {
+      const data = await wishRequest(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(pendingWish) });
+      if (!data.item || !Number.isSafeInteger(data.item.id)) throw new Error("暂未确认提交结果，请重试。");
+      const item = data.item;
+      if (item.status === "published") {
+        wishes = [item, ...wishes.filter(w => w.id !== item.id)]; renderWishes(item.id);
+        statusNode.textContent = "祝福已保存到小岛，其他访客也能看到。";
+      }
+      storage.set("buji-guest-name", pendingWish.name); storage.set("buji-wish-draft", null);
+      pendingWish = null; textInput.value = "";
+      nameInput.removeAttribute("aria-invalid"); textInput.removeAttribute("aria-invalid");
+      toast(item.status === "hidden" ? "这条祝福已收到，目前未公开展示。" : "祝福已贴上小岛，谢谢你的心意！");
+    } catch (error) { $("#form-error").textContent = error.message; }
+    finally {
+      sendingWish = false; sendButton.disabled = false; nameInput.readOnly = false; textInput.readOnly = false;
+      wishForm.setAttribute("aria-busy", "false"); sendButton.textContent = "把祝福贴上小岛";
+    }
   });
   // 每个模块的末尾进入视野，视为浏览完成；IO 观察轻量哨兵，快速滚动仍可继续浏览。
   const stickerDefs = [

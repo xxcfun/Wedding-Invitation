@@ -9,3 +9,16 @@
 .env.*
 !.env.example
 node_modules/
+
+# 留言数据库与备份只保留在服务器私有目录
+server/data/
+server/backups/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# 留言服务私有配置、数据库与备份
+server/private/wishes-config.php
+server/private/data/
+server/private/backups/

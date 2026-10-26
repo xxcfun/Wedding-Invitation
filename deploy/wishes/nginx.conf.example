@@ -1,0 +1,20 @@
+# 添加到 wxapi.xxcfun.cn 的 HTTPS server 块内。
+# 前提：该站点运行目录是 /public，public/wishes.php 与现有 wechat-signature.php 并列。
+# 保留宝塔已有 include enable-php-XX.conf，不再反向代理到 Node 3001。
+location = /admin {
+    add_header Cache-Control "no-store" always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'" always;
+    rewrite ^ /admin.html last;
+}
+location = /admin.html {
+    add_header Cache-Control "no-store" always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'" always;
+}
+location /api/ {
+    client_max_body_size 8k;
+    rewrite ^ /wishes.php last;
+}
+# 如需显式传递 Authorization，在宝塔该站点现有 PHP location 内加入：
+# fastcgi_param HTTP_AUTHORIZATION $http_authorization;
+# PHP-FPM 的 REMOTE_ADDR 使用 Nginx 的 $remote_addr。不要改成客户端可伪造的请求头。
+# 不要缓存 /api/ 或 wishes.php；若使用 CDN，为这些路径及 /admin 设置绕过缓存。

@@ -588,7 +588,7 @@
           <use href="#i-sprig" />
         </svg>
       </section>
-      <!-- 模块九：留言仅保存在当前浏览器；如需多人共享，请接入自己的留言接口。 -->
+      <!-- 模块九：由 PHP + SQLite 提供共享留言。 -->
       <section
         class="section wishes"
         id="wishes"
@@ -601,9 +601,12 @@
           <p class="subcopy">把心意写成便签，珍藏在这座小岛</p>
         </header>
         <div class="bulletin wood reveal">
-          <div class="notes" id="notes"></div>
+          <div class="notes" id="notes" aria-busy="false"></div>
+          <p class="wish-status" id="wish-status" role="status" aria-live="polite">小岛正在等待你的祝福。</p>
+          <div class="wish-actions"><button class="btn press" id="wish-refresh" type="button">刷新祝福</button><button class="btn press" id="wish-more" type="button" hidden>查看更多祝福</button></div>
         </div>
-        <!-- 使用自定义必填提示替代浏览器默认气泡；提交后保存到访客本机，不发送到公共留言服务。 -->
+        <details class="islander-wishes"><summary>岛民寄语 · 角色创作祝福</summary><div class="notes" id="islander-notes"></div></details>
+        <!-- 服务端成功后才确认提交；失败保留输入和重试标识。 -->
         <form class="wish-form reveal" id="wish-form" aria-describedby="wish-storage-help" novalidate>
           <h3 class="form-title">给两位岛民的留言</h3>
           <label for="guest-name"
@@ -634,7 +637,7 @@
               <use href="#i-mail" /></svg
             >把祝福贴上小岛
           </button>
-          <!-- <p class="form-help" id="wish-storage-help">留言仅保存在当前设备的浏览器中，最多 50 条，新人与其他访客无法直接看到。可截图发送给新人；清理浏览器数据会移除留言。</p> -->
+          <p class="form-help" id="wish-storage-help">留言提交后将公开展示，新人与其他访客都能看到。请勿填写电话等隐私信息。此浏览器会记住你的称呼并暂存草稿。</p>
           <p class="error" id="form-error" role="alert"></p>
         </form>
       </section>
