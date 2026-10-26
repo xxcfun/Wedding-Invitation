@@ -2663,5 +2663,5 @@ body::before {
 .note-author, .note-date { font-size: 12px; }
 .note-date { display: block; text-align: right; color: #52614b; margin-top: 4px; }
 .islander-wishes { margin-top: 20px; }
-.islander-wishes summary { cursor: pointer; min-height: 44px; padding: 12px 4px; font-size: 14px; }
+.islander-wishes-title { margin: 0; padding: 12px 4px; font-size: 14px; font-weight: 400; }
 .islander-wishes .notes { padding: 12px 5px; }
