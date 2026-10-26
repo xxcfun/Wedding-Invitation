@@ -10,7 +10,7 @@ const CONFIG = {
   date: "2026-11-04T11:28:00+08:00", // 可修改：婚礼日期及开始时间，保留 +08:00 时区
   timeLabel: "中午11点28分", // 可修改：时间展示文案；留空时自动显示婚期中的小时和分钟
   lunarDate: "丙午年九月廿六", // 可修改：农历日期；更换婚期时请同步修改
-  venue: "海岱禧合酒店", // 可修改：婚宴地点
+  venue: "海岱禧合酒店·十里红妆厅", // 可修改：婚宴地点
   venueFull: "海岱禧合婚礼艺术中心", // 可修改：酒店完整名称
   address: "山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）· 十里红妆厅", // 可修改：完整地址
   longitude: 118.457025,
@@ -92,7 +92,7 @@ const CONFIG = {
   share: {
     title: "叮～有一封布吉岛来信📩",
     description:
-      "2026年11月4日 · 中午11点28分｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
+      "2026年11月4日 · 中午11点28分｜诚邀您相聚青州海岱禧合酒店·十里红妆厅，见证我们的幸福时刻",
     image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；用于网页预览元信息
     link: "https://wedding.xxcfun.cn", // 可修改：线上请柬网址，邀请卡二维码指向该地址
     poster: "assets/island-invitation-hd.jpg", // 当前高清封面制作的 1080×1620 邀请图卡；修改资料后运行 scripts/build-share-assets.cjs 重建
