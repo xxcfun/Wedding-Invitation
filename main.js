@@ -214,54 +214,6 @@ const CONFIG = {
             : dateWeek + " 开始"),
   );
   document.title = CONFIG.share.title;
-  // 日历使用绝对 UTC 时刻，避免异地设备把北京时间当作当地时间。
-  const calendarEscape = (value) => String(value).replace(/\\/g, "\\\\")
-    .replace(/\r?\n/g, "\\n").replace(/;/g, "\\;").replace(/,/g, "\\,");
-  const calendarTime = (date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-  const calendarLink = $("#calendar-link");
-  if (validDate) {
-    const foldCalendarLine = (line) => {
-      let result = "", width = 0;
-      for (const char of line) {
-        const size = new TextEncoder().encode(char).length;
-        if (width + size > 75) { result += "\r\n "; width = 1; }
-        result += char;
-        width += size;
-      }
-      return result;
-    };
-    const calendar = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Buji Island//Wedding//ZH",
-      "CALSCALE:GREGORIAN", "BEGIN:VEVENT", "UID:buji-wedding-" + weddingDate.getTime() + "@invitation",
-      "DTSTAMP:" + calendarTime(new Date()), "DTSTART:" + calendarTime(weddingDate),
-      "SUMMARY:" + calendarEscape(CONFIG.groom + "与" + CONFIG.bride + "的婚礼"),
-      "LOCATION:" + calendarEscape(CONFIG.venueFull + "，" + CONFIG.address),
-      "DESCRIPTION:" + calendarEscape("诚邀您见证我们的幸福时刻。流程以现场安排为准。完整请柬：" + CONFIG.share.link),
-      "END:VEVENT", "END:VCALENDAR", ""].map(foldCalendarLine).join("\r\n");
-    calendarLink.setAttribute("aria-describedby", "calendar-help");
-    calendarLink.href = URL.createObjectURL(new Blob([calendar], {type: "text/calendar;charset=utf-8"}));
-  } else {
-    calendarLink.hidden = true;
-    $("#calendar-help").textContent = "婚期正在确认，请以新人通知为准。";
-  }
-  if (CONFIG.agenda[0]?.time) $("#arrival-time").textContent = CONFIG.agenda[0].time;
-  // 剪贴板不可用时展示可选中的完整地址，保留手动复制路径。
-  $("#copy-address").addEventListener("click", async () => {
-    const address = CONFIG.venueFull + "\n" + CONFIG.address;
-    try {
-      await navigator.clipboard.writeText(address);
-      toast("酒店与完整地址已复制，可粘贴到地图搜索");
-    } catch {
-      const field = $("#address-copy-fallback") || el("textarea", "address-copy-fallback");
-      field.id = "address-copy-fallback";
-      field.readOnly = true;
-      field.setAttribute("aria-label", "酒店与完整地址，请长按或全选复制");
-      field.value = address;
-      $("#copy-address").closest(".info-actions").append(field);
-      field.focus();
-      field.select();
-      toast("请长按或全选下方地址，手动复制");
-    }
-  });
   // 按配置顺序创建婚礼流程；逐项设置延迟，让滚动入场形成轻微错落。
   CONFIG.agenda.forEach((s, i) => {
     const task = el("li", "task reveal");
@@ -513,7 +465,7 @@ const CONFIG = {
           void prepareWeChatMap();
           toast(
             failed
-              ? "地图暂未连接，正在重试；也可点击手绘地图复制酒店名称"
+              ? "地图暂未连接，正在重试；也可在地图中搜索酒店名称"
               : "地图正在准备，请稍后再点一次导航前往",
           );
           // 不在异步初始化结束后自动打开；让访客再次点击，保留明确的用户操作时机。
@@ -532,12 +484,12 @@ const CONFIG = {
             infoUrl: CONFIG.share.link,
             fail: () =>
               toast(
-                "地图打开失败，可点击手绘地图复制酒店名称，或在浏览器打开请柬",
+                "地图打开失败，可在地图中搜索酒店名称，或在浏览器打开请柬",
               ),
           });
         } catch {
           // 兼容 SDK 调用同步抛错的情况；异步失败由上面的 fail 回调处理。
-          toast("地图打开失败，可点击手绘地图复制酒店名称，或在浏览器打开请柬");
+          toast("地图打开失败，可在地图中搜索酒店名称，或在浏览器打开请柬");
         }
       }
       // 微信外由原生链接唤起高德；返回请柬后不执行延时跳转。
