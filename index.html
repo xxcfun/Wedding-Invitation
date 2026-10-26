@@ -414,42 +414,22 @@
           <use href="#i-sprig" />
         </svg>
       </section>
-      <!-- 模块三：旅行故事、短句和图标可在 main.js 的 CONFIG.story 修改。 -->
+      <!-- 模块三：完整婚纱照，上下边缘渐隐至长卷背景。 -->
       <section
-        class="section story"
+        class="section wedding-portrait"
         id="story"
         data-sticker="2"
-        aria-labelledby="story-title"
+        aria-label="我们的婚纱照"
       >
-        <div class="water-glow" aria-hidden="true"></div>
-        <span class="firefly glimmer-near" aria-hidden="true"></span
-        ><span class="firefly glimmer-far" aria-hidden="true"></span>
-        <div class="cloud" aria-hidden="true"></div>
-        <header class="section-head reveal">
-          <div class="eyebrow">小岛旅行故事 · 01</div>
-          <h2 id="story-title">和你走过的风景</h2>
-          <p class="subcopy">从山海到街巷，下一站是我们的婚礼</p>
-        </header>
-        <!-- 旅行节点由主脚本追加，原有路线 SVG 保留为静态背景。 -->
-        <div class="story-map" id="story-map">
-          <svg
-            class="story-route"
-            viewBox="0 0 360 464"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M77 36C77 80 282 34 282 120S68 151 85 211s200 23 200 95S95 317 91 399"
-            />
-          </svg>
-          <div class="map-message map-message-corner">
-            故事的下一站，<br />是有你的每一天。
-          </div>
-        </div>
-        <p class="story-caption">走过的每一站，都想把你写进回忆里。</p>
-        <svg class="cross-sprig" aria-hidden="true">
-          <use href="#i-sprig" />
-        </svg>
+        <img
+          class="wedding-portrait-image"
+          src="assets/wedding-chapel.webp"
+          width="1024"
+          height="1536"
+          alt="海边教堂的花海与飘落花瓣中，新娘身着铺展的白色婚纱"
+          loading="lazy"
+          decoding="async"
+        />
       </section>
       <!-- 模块四：酒店名称、地址、时间统一由 CONFIG 修改。 -->
       <section
@@ -512,28 +492,15 @@
           <div class="eyebrow">下一站，幸福目的地</div>
           <h2 id="map-title">跟着海风来赴约</h2>
         </header>
-        <button
-          type="button"
-          class="map-frame wood press reveal"
-          data-copy-address
-          aria-label="复制海岱禧合婚礼艺术中心"
-        >
+        <div class="map-frame wood reveal">
           <img
             id="location-map"
             width="440"
             height="370"
             loading="lazy"
             alt="海岱禧合酒店手绘位置示意图，标有后营子街808号及西苑小学"
-          /><span class="map-caption"
-            ><svg class="icon mini" aria-hidden="true">
-              <use href="#i-pin" /></svg
-            >点击图片 · 复制场地名称</span
-          >
-        </button>
-        <p class="location-address" data-bind="address">
-          山东省潍坊市青州市王府街道后营子街808号（西苑小学对面）
-        </p>
-        <p class="location-note">复制后可粘贴到高德地图中搜索</p>
+          />
+        </div>
         <svg class="cross-sprig" aria-hidden="true">
           <use href="#i-sprig" />
         </svg>

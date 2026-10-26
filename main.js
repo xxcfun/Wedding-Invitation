@@ -2,7 +2,7 @@
    中文可修改资料区：正式使用前优先修改本区。日期与时刻均使用北京时间。
    静态部署：请同时上传 HTML、CSS、JS 和 assets；不依赖 Tailwind CDN。
    照片可以填写 HTTPS URL、同目录路径或 data:image/... 内嵌图片。
-   姓名与婚期已填写真实信息；恋爱节点与其余流程时刻仍为示例，可按实际情况修改。
+   姓名与婚期已填写真实信息；流程时刻可按实际情况修改。
 ===================================================================== */
 const CONFIG = {
   groom: "刁勇辰", // 可修改：新郎姓名
@@ -20,39 +20,6 @@ const CONFIG = {
     signatureEndpoint: "https://wxapi.xxcfun.cn/wechat-signature.php", // 仅公开签名接口；公众号密钥保留在服务器
   },
   audio: "assets/island-bgm-lite.mp3", // 背景音乐：默认自动播放，受浏览器限制时在首次交互后播放
-  // 可修改：旅行节点标题、短句与图标；本区域不展示日期。
-  story: [
-    {
-      title: "青岛",
-      subtitle: "一起看过海",
-      note: "海风作伴，身边是你",
-      icon: "waves",
-    },
-    {
-      title: "贵州",
-      subtitle: "那远山呼唤我",
-      note: "和你赴约，山野之间",
-      icon: "mountains",
-    },
-    {
-      title: "天津",
-      subtitle: "一起慢慢走",
-      note: "大街小巷，都有我们的脚印",
-      icon: "footsteps",
-    },
-    {
-      title: "一起安家",
-      subtitle: "把未来交给彼此",
-      note: "往后的风景，都有你",
-      icon: "home",
-    },
-    {
-      title: "幸福靠岸",
-      subtitle: "我们的婚礼",
-      note: "小岛故事，从此双人续写",
-      icon: "wedding-arch",
-    },
-  ],
   agenda: [
     {
       time: "11:00",
@@ -65,18 +32,13 @@ const CONFIG = {
     { time: "14:00", title: "茶点叙欢", note: "一盏清茶，共叙欢喜时光" },
   ],
   photos: [
-    // 可修改：6 张婚照；src 留空时为可用的原创插画占位，不加载示例陌生人照片
-    { src: "", title: "和你，去看海", icon: "shell", palette: "sea" },
-    { src: "", title: "把春天送给你", icon: "flower", palette: "garden" },
-    {
-      src: "",
-      title: "每一天的小欢喜",
-      icon: "camera",
-      palette: "peach",
-    },
-    { src: "", title: "一起等一场日落", icon: "sun", palette: "sunset" },
-    { src: "", title: "最好的，是我们", icon: "rings", palette: "sage" },
-    { src: "", title: "余生请多指教", icon: "heart", palette: "cream" },
+    // 六张婚照按上传顺序展示。
+    { src: "assets/wedding-album-01.webp", title: "花海里的我们", icon: "flower", palette: "garden" },
+    { src: "assets/wedding-album-02.webp", title: "花路与飞纱", icon: "shell", palette: "garden" },
+    { src: "assets/wedding-album-03.webp", title: "晴日里的誓言", icon: "sun", palette: "garden" },
+    { src: "assets/wedding-album-04.webp", title: "牵手，走向余生", icon: "heart", palette: "garden" },
+    { src: "assets/wedding-album-05.webp", title: "把幸福举高高", icon: "rings", palette: "garden" },
+    { src: "assets/wedding-album-06.webp", title: "阳光下的我们", icon: "camera", palette: "garden" },
   ],
   sampleWishes: [
     // 根据角色特点创作的婚礼祝福，并非游戏原台词。
@@ -222,22 +184,6 @@ const CONFIG = {
             : dateWeek + " 开始"),
   );
   document.title = CONFIG.share.title;
-  // 根据 CONFIG.story 生成旅行节点，data-step 交由 CSS 控制岛屿位置与路线布局。
-  const storyMap = $("#story-map");
-  CONFIG.story.forEach((s, i) => {
-    const stop = el("div", "story-stop reveal");
-    stop.dataset.step = i;
-    stop.style.transitionDelay = i * 45 + "ms";
-    const mark = el("div", "islet");
-    mark.append(icon(s.icon));
-    stop.append(
-      mark,
-      el("h3", "stop-title", s.title),
-      el("p", "stop-subtitle", s.subtitle),
-      el("p", "stop-note", s.note),
-    );
-    storyMap.append(stop);
-  });
   // 按配置顺序创建婚礼流程；逐项设置延迟，让滚动入场形成轻微错落。
   CONFIG.agenda.forEach((s, i) => {
     const task = el("li", "task reveal");
@@ -263,7 +209,7 @@ const CONFIG = {
           "'": "&apos;",
         })[c],
     );
-  const mapSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 370"><defs><pattern id="wave" width="40" height="25" patternUnits="userSpaceOnUse"><path d="M0 13q10-6 20 0t20 0" fill="none" stroke="#fff" opacity=".25"/></pattern><pattern id="grass" width="32" height="30" patternUnits="userSpaceOnUse"><path d="m5 8 3-5 3 5m12 17 3-5 3 5" fill="none" stroke="#9bbd7e" opacity=".3"/><circle cx="16" cy="17" r="1" fill="#faf5d5"/></pattern><filter id="sh"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#758f5a" flood-opacity=".22"/></filter></defs><rect width="440" height="370" fill="#b9ddcf"/><rect width="440" height="370" fill="url(#wave)"/><path d="M-10 50Q45 20 85 42T187 21 304 35 445 20V322Q370 339 320 321T210 341 106 320 0 337Z" fill="#ebdeb2"/><path d="M-10 39Q45 9 85 31T187 10 304 24 445 9V305Q370 322 320 304T210 324 106 303 0 320Z" fill="#c7dba0"/><path d="M-10 39Q45 9 85 31T187 10 304 24 445 9V305Q370 322 320 304T210 324 106 303 0 320Z" fill="url(#grass)"/><path d="M220 15V312" stroke="#b4bd94" stroke-width="33"/><path d="M220 15V312" stroke="#fbf3d8" stroke-width="29"/><path d="M-10 207H450" stroke="#b4bd94" stroke-width="45"/><path d="M-10 207H450" stroke="#fbf3d8" stroke-width="41"/><path d="M-10 207H440" stroke="#d8d5b2" stroke-width="2" stroke-dasharray="8 9"/><g fill="#91b57d" filter="url(#sh)"><circle cx="39" cy="85" r="22"/><circle cx="76" cy="55" r="18"/><circle cx="383" cy="48" r="21"/><circle cx="404" cy="92" r="18"/><circle cx="46" cy="267" r="20"/><circle cx="384" cy="280" r="25"/></g><g fill="#d6e3b3"><circle cx="33" cy="78" r="12"/><circle cx="71" cy="50" r="11"/><circle cx="377" cy="41" r="12"/><circle cx="378" cy="273" r="13"/></g><g filter="url(#sh)"><rect x="266" y="104" width="101" height="58" rx="9" fill="#faf0d1"/><path d="m253 108 63-36 64 36Z" fill="#be9471"/><path d="m258 105 58-32 58 32Z" fill="#d6b18b"/><rect x="306" y="131" width="21" height="31" rx="10" fill="#9eb295"/><g fill="#b7cbbc"><rect x="278" y="123" width="14" height="14" rx="3"/><rect x="341" y="123" width="14" height="14" rx="3"/></g></g><path d="M315 160v25" stroke="#fcf5dc" stroke-width="16"/><g filter="url(#sh)"><rect x="98" y="247" width="81" height="37" rx="6" fill="#fff3d1"/><path d="m90 248 49-23 49 23Z" fill="#8faea1"/><g fill="#b3c9b6"><rect x="108" y="257" width="12" height="13" rx="2"/><rect x="133" y="257" width="12" height="13" rx="2"/><rect x="157" y="257" width="12" height="13" rx="2"/></g></g><g font-family="sans-serif" text-anchor="middle" fill="#506344"><text x="138" y="303" font-size="13">西苑小学</text><text x="95" y="212" font-size="13">后 营 子 街</text><text x="316" y="65" font-size="13" font-weight="bold">${escapeXML(CONFIG.venue)}</text><text x="355" y="233" font-size="11">808号</text></g><g transform="translate(306 108)" filter="url(#sh)"><path d="M0 17v-48" stroke="#795f42" stroke-width="3"/><path d="M2-31q15-7 29 0v21q-14-7-29 0" fill="#da8d78"/><path d="m13-24 3 3 3-3" stroke="#fff4d9" fill="none" stroke-width="2"/></g><g transform="translate(33 28)" font-family="sans-serif" text-anchor="middle" fill="#64805e"><text y="0" font-size="11">北</text><path d="m0 8-5 13h10Z" fill="#64805e"/></g><g fill="#fff5de"><circle cx="51" cy="162" r="4"/><circle cx="60" cy="167" r="4"/><circle cx="59" cy="157" r="4"/><circle cx="371" cy="168" r="4"/><circle cx="380" cy="163" r="4"/><circle cx="381" cy="173" r="4"/></g><g fill="#e4bd74"><circle cx="57" cy="162" r="3"/><circle cx="377" cy="168" r="3"/></g><rect x="135" y="339" width="170" height="22" rx="11" fill="#fff9e5" opacity=".85"/><text x="220" y="354" text-anchor="middle" font-size="10" font-family="sans-serif" fill="#66765b">手绘位置示意 · 点击开启导航</text></svg>`;
+  const mapSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 370"><defs><pattern id="wave" width="40" height="25" patternUnits="userSpaceOnUse"><path d="M0 13q10-6 20 0t20 0" fill="none" stroke="#fff" opacity=".25"/></pattern><pattern id="grass" width="32" height="30" patternUnits="userSpaceOnUse"><path d="m5 8 3-5 3 5m12 17 3-5 3 5" fill="none" stroke="#9bbd7e" opacity=".3"/><circle cx="16" cy="17" r="1" fill="#faf5d5"/></pattern><filter id="sh"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#758f5a" flood-opacity=".22"/></filter></defs><rect width="440" height="370" fill="#b9ddcf"/><rect width="440" height="370" fill="url(#wave)"/><path d="M-10 50Q45 20 85 42T187 21 304 35 445 20V322Q370 339 320 321T210 341 106 320 0 337Z" fill="#ebdeb2"/><path d="M-10 39Q45 9 85 31T187 10 304 24 445 9V305Q370 322 320 304T210 324 106 303 0 320Z" fill="#c7dba0"/><path d="M-10 39Q45 9 85 31T187 10 304 24 445 9V305Q370 322 320 304T210 324 106 303 0 320Z" fill="url(#grass)"/><path d="M220 15V312" stroke="#b4bd94" stroke-width="33"/><path d="M220 15V312" stroke="#fbf3d8" stroke-width="29"/><path d="M-10 207H450" stroke="#b4bd94" stroke-width="45"/><path d="M-10 207H450" stroke="#fbf3d8" stroke-width="41"/><path d="M-10 207H440" stroke="#d8d5b2" stroke-width="2" stroke-dasharray="8 9"/><g fill="#91b57d" filter="url(#sh)"><circle cx="39" cy="85" r="22"/><circle cx="76" cy="55" r="18"/><circle cx="383" cy="48" r="21"/><circle cx="404" cy="92" r="18"/><circle cx="46" cy="267" r="20"/><circle cx="384" cy="280" r="25"/></g><g fill="#d6e3b3"><circle cx="33" cy="78" r="12"/><circle cx="71" cy="50" r="11"/><circle cx="377" cy="41" r="12"/><circle cx="378" cy="273" r="13"/></g><g filter="url(#sh)"><rect x="266" y="104" width="101" height="58" rx="9" fill="#faf0d1"/><path d="m253 108 63-36 64 36Z" fill="#be9471"/><path d="m258 105 58-32 58 32Z" fill="#d6b18b"/><rect x="306" y="131" width="21" height="31" rx="10" fill="#9eb295"/><g fill="#b7cbbc"><rect x="278" y="123" width="14" height="14" rx="3"/><rect x="341" y="123" width="14" height="14" rx="3"/></g></g><path d="M315 160v25" stroke="#fcf5dc" stroke-width="16"/><g filter="url(#sh)"><rect x="98" y="247" width="81" height="37" rx="6" fill="#fff3d1"/><path d="m90 248 49-23 49 23Z" fill="#8faea1"/><g fill="#b3c9b6"><rect x="108" y="257" width="12" height="13" rx="2"/><rect x="133" y="257" width="12" height="13" rx="2"/><rect x="157" y="257" width="12" height="13" rx="2"/></g></g><g font-family="sans-serif" text-anchor="middle" fill="#506344"><text x="138" y="303" font-size="13">西苑小学</text><text x="95" y="212" font-size="13">后 营 子 街</text><text x="316" y="65" font-size="13" font-weight="bold">${escapeXML(CONFIG.venue)}</text><text x="355" y="233" font-size="11">808号</text></g><g transform="translate(306 108)" filter="url(#sh)"><path d="M0 17v-48" stroke="#795f42" stroke-width="3"/><path d="M2-31q15-7 29 0v21q-14-7-29 0" fill="#da8d78"/><path d="m13-24 3 3 3-3" stroke="#fff4d9" fill="none" stroke-width="2"/></g><g transform="translate(33 28)" font-family="sans-serif" text-anchor="middle" fill="#64805e"><text y="0" font-size="11">北</text><path d="m0 8-5 13h10Z" fill="#64805e"/></g><g fill="#fff5de"><circle cx="51" cy="162" r="4"/><circle cx="60" cy="167" r="4"/><circle cx="59" cy="157" r="4"/><circle cx="371" cy="168" r="4"/><circle cx="380" cy="163" r="4"/><circle cx="381" cy="173" r="4"/></g><g fill="#e4bd74"><circle cx="57" cy="162" r="3"/><circle cx="377" cy="168" r="3"/></g></svg>`;
   // 把自包含 SVG 转成可赋给 img.src 的 data URL，无需额外请求图片服务。
   const svgURL = (svg) =>
     "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
@@ -301,6 +247,7 @@ const CONFIG = {
     const img = el("img");
     img.src = p.src;
     img.alt = p.placeholder ? `${p.title}，待替换的原创婚礼插画` : p.title;
+    img.draggable = false;
     img.loading = "lazy";
     img.width = 320;
     img.height = 360;
@@ -319,37 +266,17 @@ const CONFIG = {
     btn.addEventListener("click", () => openPhoto(i));
     $("#photo-grid").append(btn);
   });
-  // 地图图片复制完整场地名称，与导航目的地保持一致，供访客粘贴到高德地图中搜索。
-  $("[data-copy-address]").addEventListener("click", async () => {
-    const address = CONFIG.venueFull;
-    let copied = false;
-    try {
-      await navigator.clipboard.writeText(address);
-      copied = true;
-    } catch {
-      // 兼容不支持 Clipboard API 或禁止剪贴板权限的浏览器。
-      const previousFocus = document.activeElement;
-      const input = document.createElement("textarea");
-      input.value = address;
-      input.readOnly = true;
-      input.style.cssText = "position:fixed;top:0;left:-9999px;font-size:16px";
-      document.body.append(input);
-      try {
-        input.select();
-        input.setSelectionRange(0, input.value.length);
-        copied = document.execCommand("copy");
-      } catch {
-        copied = false;
-      } finally {
-        input.remove();
-        previousFocus?.focus({ preventScroll: true });
+  // 限制婚照的常规保存操作；保留相册点击、滑动和键盘浏览。
+  const protectedPhotoSelector = ".photo-card, #lightbox-image, .wedding-portrait-image";
+  for (const eventName of ["contextmenu", "dragstart"]) {
+    document.addEventListener(eventName, (event) => {
+      if (event.target instanceof Element && event.target.closest(protectedPhotoSelector)) {
+        event.preventDefault();
       }
-    }
-    if (copied) {
-      toast("场地名称已复制，可粘贴到高德地图中搜索");
-    } else {
-      window.prompt("自动复制未成功，请长按或选中下方场地名称复制：", address);
-    }
+    });
+  }
+  document.querySelectorAll("#lightbox-image, .wedding-portrait-image").forEach((img) => {
+    img.draggable = false;
   });
   // 微信使用内置地图位置页；其他手机浏览器保留高德原生导航。
   const { longitude: lng, latitude: lat } = CONFIG;

@@ -1128,124 +1128,30 @@ body::before {
   margin-top: 24px;
   color: #7c896d;
 }
-.story {
-  padding-top: 30px;
+/* 婚纱照保留原始比例；透明蒙版露出长卷背景，让两端自然衔接。 */
+.wedding-portrait {
+  padding: 0;
+  margin: 0;
 }
-.story-map {
-  position: relative;
-  height: 514px;
-  margin: 15px -5px 0;
-}
-/* 路线 SVG 作为背景连线，不参与文字排版；节点通过 data-step 分别定位。 */
-.story-route {
-  position: absolute;
-  inset: 0;
+.wedding-portrait-image {
+  display: block;
   width: 100%;
-  height: 464px;
-  fill: none;
-  stroke: #fff9e4;
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-dasharray: 3 12;
-  filter: drop-shadow(0 2px 1px #84a47a26);
-}
-/* 旅行节点使用自己的入场效果，坐标由后续 data-step 选择器决定。 */
-.story-stop {
-  position: absolute;
-  width: 125px;
-  text-align: center;
-  z-index: 2;
-}
-.story-stop[data-step="0"] {
-  left: 2%;
-  top: 0;
-}
-.story-stop[data-step="1"] {
-  right: 1%;
-  top: 80px;
-}
-.story-stop[data-step="2"] {
-  left: 5%;
-  top: 174px;
-}
-.story-stop[data-step="3"] {
-  right: 0;
-  top: 267px;
-}
-.story-stop[data-step="4"] {
-  left: 7%;
-  top: 355px;
-}
-.islet {
-  width: 66px;
-  height: 52px;
-  margin: auto;
-  background: radial-gradient(ellipse at 45% 25%, #c2d28b, #a5bf79 65%);
-  border-radius: 48% 52% 45% 48%;
-  box-shadow:
-    0 5px 0 #dfcf9f,
-    0 9px 0 #c0d5bd88,
-    0 13px 18px #7d9f7d17;
-  display: grid;
-  place-items: center;
-  transform: rotate(-7deg);
-}
-.islet svg {
-  width: 31px;
-  height: 31px;
-  color: #5f7e4e;
-  transform: rotate(7deg);
-}
-.story-stop:last-child .islet {
-  background: #f5dbc0;
-  box-shadow:
-    0 5px 0 #d8b28a,
-    0 10px 0 #dfd9b8;
-}
-.story-stop:last-child .islet svg {
-  color: #a66b53;
-}
-.stop-title {
-  font-family: var(--round);
-  font-size: 18px;
-  letter-spacing: 3px;
-  margin-top: 13px;
-}
-.stop-subtitle {
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: #5f745b;
-}
-.stop-note {
-  font-size: 11px;
-  color: #61765d;
-}
-.map-message {
-  position: absolute;
-  left: 6px;
-  bottom: 55px;
-  width: 115px;
-  color: #718a6b;
-  font-family: var(--round);
-  font-size: 15px;
-  line-height: 1.7;
-  transform: rotate(-9deg);
-}
-.story-caption {
-  text-align: center;
-  font-size: 12px;
-  color: #667d63;
-  margin-top: 17px;
-}
-.story .cloud {
-  top: 45px;
-  right: -48px;
-  opacity: 0.35;
-}
-.story .cross-sprig {
-  left: -19px;
-  bottom: -47px;
-  transform: rotate(23deg);
+  height: auto;
+  aspect-ratio: 2 / 3;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 12%,
+    #000 84%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 12%,
+    #000 84%,
+    transparent 100%
+  );
 }
 /* ===== 婚礼信息公告板 / 导航地图 ===== */
 .info {
@@ -1352,9 +1258,9 @@ body::before {
 .location {
   padding-top: 21px;
 }
-/* 手绘地图本身是复制酒店名称的按钮；图片比例固定以减少懒加载后的布局移动。 */
+/* 静态手绘地图；图片比例固定以减少懒加载后的布局移动。 */
 .map-frame {
-  padding: 11px 11px 0;
+  padding: 11px;
   border-radius: 27px;
   width: 100%;
   text-align: left;
@@ -1369,29 +1275,6 @@ body::before {
   object-fit: cover;
   border-radius: 18px;
   border: 2px solid #f8edcf;
-}
-.map-caption {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #66482e;
-  font-size: 12px;
-  padding: 12px 0;
-  letter-spacing: 2px;
-}
-.location-address {
-  font-size: 12px;
-  text-align: center;
-  color: #64735c;
-  padding: 22px 10px 0;
-  line-height: 1.9;
-}
-.location-note {
-  text-align: center;
-  font-size: 10px;
-  color: #68765f;
-  letter-spacing: 1px;
 }
 /* ===== 倒计时和任务清单 ===== */
 .countdown {
@@ -2761,4 +2644,18 @@ body::before {
 }
 .farewell-ampersand {
   color: #b58369;
+}
+
+/* 婚照限制长按菜单、选择与拖拽，触屏仍可正常滚动及切换。 */
+.photo-card,
+.photo-card img,
+#lightbox-image,
+.wedding-portrait-image {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.photo-card img {
+  pointer-events: none;
 }
