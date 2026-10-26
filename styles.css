@@ -1513,16 +1513,6 @@ body::before {
   background: #d8c69c9c;
   transform: rotate(-12deg);
 }
-.photo-card .photo-number {
-  position: absolute;
-  left: 13px;
-  top: 12px;
-  border-radius: 10px;
-  padding: 1px 7px;
-  background: #fffdf0d6;
-  color: #53654d;
-  font-size: 9px;
-}
 .album-tip {
   font-size: 11px;
   text-align: center;
@@ -2659,3 +2649,17 @@ body::before {
 .photo-card img {
   pointer-events: none;
 }
+
+/* 赴约工具与宾客指南沿用奶油信纸和草绿按钮。 */
+.info-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.info-actions .btn { min-height: 44px; flex: 1 1 130px; }
+.secondary-action { background: #edf0df; color: #42594b; box-shadow: 0 3px 0 #c5cfb5; }
+.action-help { margin-top: 14px; }
+.address-copy-fallback { width: 100%; min-height: 100px; padding: 12px; border: 1px solid #8b9e7b; border-radius: 10px; background: #fffaf0; color: #42594b; font: inherit; font-size: 13px; }
+.map-caption { text-align: center; font-size: 12px; line-height: 1.8; margin: 12px 0 24px; color: #526548; }
+.guest-guide { padding: 24px 20px; }
+.guest-guide h3 { font-family: var(--round); font-size: 22px; margin: 5px 0 16px; }
+.guest-guide details { border-top: 1px dashed #bdc5a9; }
+.guest-guide summary { cursor: pointer; min-height: 48px; padding: 13px 0; font-size: 14px; font-weight: 600; line-height: 1.6; }
+.guest-guide details p { font-size: 13px; line-height: 1.9; margin: 0 0 16px; color: #526548; overflow-wrap: anywhere; }
+.form-help { font-size: 12px; text-align: left; }

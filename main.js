@@ -88,7 +88,7 @@ const CONFIG = {
   share: {
     title: "叮～有一封布吉岛来信📩",
     description:
-      "2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
+      "2026年11月4日 · 中午11点28分｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻",
     image: "https://wedding.xxcfun.cn/assets/island-share-hd.jpg", // 当前高清封面制作的 1200px 分享图；用于网页预览元信息
     link: "https://wedding.xxcfun.cn", // 可修改：线上请柬网址，邀请卡二维码指向该地址
     poster: "assets/island-invitation-hd.jpg", // 当前高清封面制作的 1080×1620 邀请图卡；修改资料后运行 scripts/build-share-assets.cjs 重建
@@ -214,6 +214,54 @@ const CONFIG = {
             : dateWeek + " 开始"),
   );
   document.title = CONFIG.share.title;
+  // 日历使用绝对 UTC 时刻，避免异地设备把北京时间当作当地时间。
+  const calendarEscape = (value) => String(value).replace(/\\/g, "\\\\")
+    .replace(/\r?\n/g, "\\n").replace(/;/g, "\\;").replace(/,/g, "\\,");
+  const calendarTime = (date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const calendarLink = $("#calendar-link");
+  if (validDate) {
+    const foldCalendarLine = (line) => {
+      let result = "", width = 0;
+      for (const char of line) {
+        const size = new TextEncoder().encode(char).length;
+        if (width + size > 75) { result += "\r\n "; width = 1; }
+        result += char;
+        width += size;
+      }
+      return result;
+    };
+    const calendar = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Buji Island//Wedding//ZH",
+      "CALSCALE:GREGORIAN", "BEGIN:VEVENT", "UID:buji-wedding-" + weddingDate.getTime() + "@invitation",
+      "DTSTAMP:" + calendarTime(new Date()), "DTSTART:" + calendarTime(weddingDate),
+      "SUMMARY:" + calendarEscape(CONFIG.groom + "与" + CONFIG.bride + "的婚礼"),
+      "LOCATION:" + calendarEscape(CONFIG.venueFull + "，" + CONFIG.address),
+      "DESCRIPTION:" + calendarEscape("诚邀您见证我们的幸福时刻。流程以现场安排为准。完整请柬：" + CONFIG.share.link),
+      "END:VEVENT", "END:VCALENDAR", ""].map(foldCalendarLine).join("\r\n");
+    calendarLink.setAttribute("aria-describedby", "calendar-help");
+    calendarLink.href = URL.createObjectURL(new Blob([calendar], {type: "text/calendar;charset=utf-8"}));
+  } else {
+    calendarLink.hidden = true;
+    $("#calendar-help").textContent = "婚期正在确认，请以新人通知为准。";
+  }
+  if (CONFIG.agenda[0]?.time) $("#arrival-time").textContent = CONFIG.agenda[0].time;
+  // 剪贴板不可用时展示可选中的完整地址，保留手动复制路径。
+  $("#copy-address").addEventListener("click", async () => {
+    const address = CONFIG.venueFull + "\n" + CONFIG.address;
+    try {
+      await navigator.clipboard.writeText(address);
+      toast("酒店与完整地址已复制，可粘贴到地图搜索");
+    } catch {
+      const field = $("#address-copy-fallback") || el("textarea", "address-copy-fallback");
+      field.id = "address-copy-fallback";
+      field.readOnly = true;
+      field.setAttribute("aria-label", "酒店与完整地址，请长按或全选复制");
+      field.value = address;
+      $("#copy-address").closest(".info-actions").append(field);
+      field.focus();
+      field.select();
+      toast("请长按或全选下方地址，手动复制");
+    }
+  });
   // 按配置顺序创建婚礼流程；逐项设置延迟，让滚动入场形成轻微错落。
   CONFIG.agenda.forEach((s, i) => {
     const task = el("li", "task reveal");
@@ -257,7 +305,7 @@ const CONFIG = {
   function photoPlaceholder(p, i) {
     const c = placeholderPalettes[p.palette] || placeholderPalettes.sea;
     return svgURL(
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480"><defs><linearGradient id="b" x2="0" y2="1"><stop stop-color="${c[0]}"/><stop offset="1" stop-color="#fff6df"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#6c855b" flood-opacity=".17"/></filter></defs><rect width="400" height="480" fill="url(#b)"/><circle cx="300" cy="83" r="30" fill="#fff4c7"/><path d="M-20 311Q80 245 180 293T420 277V480H0Z" fill="${c[1]}"/><path d="M-20 369Q110 308 240 350T420 334V480H0Z" fill="${c[2]}" opacity=".52"/><g fill="#fffbec" opacity=".7"><rect x="33" y="88" width="98" height="17" rx="9"/><circle cx="75" cy="84" r="18"/><circle cx="97" cy="88" r="13"/></g><g filter="url(#s)"><path d="M124 320V213a76 76 0 0 1 152 0v107" fill="none" stroke="#fdf4d6" stroke-width="15"/><path d="M133 319V214a67 67 0 0 1 134 0v105" fill="none" stroke="#d3c5a7" stroke-width="2"/><g fill="#7fa37b"><ellipse cx="136" cy="190" rx="13" ry="27" transform="rotate(-40 136 190)"/><ellipse cx="154" cy="155" rx="13" ry="27" transform="rotate(15 154 155)"/><ellipse cx="257" cy="170" rx="14" ry="27" transform="rotate(40 257 170)"/><ellipse cx="274" cy="210" rx="14" ry="27"/></g><g fill="#fff9e7"><circle cx="144" cy="171" r="16"/><circle cx="180" cy="143" r="14"/><circle cx="242" cy="153" r="16"/><circle cx="271" cy="192" r="12"/></g><g fill="#dfbd80"><circle cx="144" cy="171" r="6"/><circle cx="180" cy="143" r="5"/><circle cx="242" cy="153" r="6"/><circle cx="271" cy="192" r="5"/></g><path d="M175 250c-18-27-51 0-22 24l22 18 23-18c29-24-5-51-23-24Z" fill="#e8ad96" transform="translate(25 -5)"/></g><g fill="#fff9e8"><circle cx="71" cy="350" r="9"/><circle cx="59" cy="359" r="9"/><circle cx="72" cy="368" r="9"/><circle cx="84" cy="358" r="9"/></g><circle cx="72" cy="359" r="7" fill="#e0bd79"/><path d="M290 340q10-40 35-25t-13 35Z" fill="#7d9e74"/><g fill="#fff9e7" opacity=".7"><circle cx="50" cy="420" r="2"/><circle cx="330" cy="393" r="3"/><circle cx="280" cy="430" r="2"/></g><rect x="118" y="402" width="164" height="32" rx="16" fill="#fff8e9bb"/><text x="200" y="423" text-anchor="middle" font-family="sans-serif" font-size="13" letter-spacing="3" fill="#627455">回忆照片 · ${String(i + 1).padStart(2, "0")}</text></svg>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480"><defs><linearGradient id="b" x2="0" y2="1"><stop stop-color="${c[0]}"/><stop offset="1" stop-color="#fff6df"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#6c855b" flood-opacity=".17"/></filter></defs><rect width="400" height="480" fill="url(#b)"/><circle cx="300" cy="83" r="30" fill="#fff4c7"/><path d="M-20 311Q80 245 180 293T420 277V480H0Z" fill="${c[1]}"/><path d="M-20 369Q110 308 240 350T420 334V480H0Z" fill="${c[2]}" opacity=".52"/><g fill="#fffbec" opacity=".7"><rect x="33" y="88" width="98" height="17" rx="9"/><circle cx="75" cy="84" r="18"/><circle cx="97" cy="88" r="13"/></g><g filter="url(#s)"><path d="M124 320V213a76 76 0 0 1 152 0v107" fill="none" stroke="#fdf4d6" stroke-width="15"/><path d="M133 319V214a67 67 0 0 1 134 0v105" fill="none" stroke="#d3c5a7" stroke-width="2"/><g fill="#7fa37b"><ellipse cx="136" cy="190" rx="13" ry="27" transform="rotate(-40 136 190)"/><ellipse cx="154" cy="155" rx="13" ry="27" transform="rotate(15 154 155)"/><ellipse cx="257" cy="170" rx="14" ry="27" transform="rotate(40 257 170)"/><ellipse cx="274" cy="210" rx="14" ry="27"/></g><g fill="#fff9e7"><circle cx="144" cy="171" r="16"/><circle cx="180" cy="143" r="14"/><circle cx="242" cy="153" r="16"/><circle cx="271" cy="192" r="12"/></g><g fill="#dfbd80"><circle cx="144" cy="171" r="6"/><circle cx="180" cy="143" r="5"/><circle cx="242" cy="153" r="6"/><circle cx="271" cy="192" r="5"/></g><path d="M175 250c-18-27-51 0-22 24l22 18 23-18c29-24-5-51-23-24Z" fill="#e8ad96" transform="translate(25 -5)"/></g><g fill="#fff9e8"><circle cx="71" cy="350" r="9"/><circle cx="59" cy="359" r="9"/><circle cx="72" cy="368" r="9"/><circle cx="84" cy="358" r="9"/></g><circle cx="72" cy="359" r="7" fill="#e0bd79"/><path d="M290 340q10-40 35-25t-13 35Z" fill="#7d9e74"/><g fill="#fff9e7" opacity=".7"><circle cx="50" cy="420" r="2"/><circle cx="330" cy="393" r="3"/><circle cx="280" cy="430" r="2"/></g><rect x="118" y="402" width="164" height="32" rx="16" fill="#fff8e9bb"/><text x="200" y="423" text-anchor="middle" font-family="sans-serif" font-size="13" letter-spacing="3" fill="#627455">回忆照片</text></svg>`,
     );
   }
   // 预先规范化照片数据；placeholder 标记同时影响卡片和大图中的无障碍说明。
@@ -290,7 +338,6 @@ const CONFIG = {
     );
     btn.append(
       img,
-      el("span", "photo-number", String(i + 1).padStart(2, "0")),
       el("span", "photo-label", p.title),
     );
     btn.addEventListener("click", () => openPhoto(i));

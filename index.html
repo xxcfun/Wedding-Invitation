@@ -10,12 +10,12 @@
     <meta name="theme-color" content="#dceff7" />
     <meta
       name="description"
-      content="2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻"
+      content="2026年11月4日 · 中午11点28分｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻"
     />
     <meta property="og:title" content="叮～有一封布吉岛来信📩" />
     <meta
       property="og:description"
-      content="2026年11月4日 · 中午11点｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻"
+      content="2026年11月4日 · 中午11点28分｜诚邀您相聚青州海岱禧合酒店，见证我们的幸福时刻"
     />
     <!-- 可修改：更换域名时，同步更新 canonical、og:url、og:image 及 CONFIG.share 的链接。 -->
     <meta property="og:type" content="website" />
@@ -334,7 +334,7 @@
           <svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>
           <div>
             <div class="date-number" data-date="short">2026.11.04</div>
-            <div class="date-week" data-date="week">星期三 · 中午11点</div>
+            <div class="date-week" data-date="week">星期三 · 中午11点28分</div>
             <div class="lunar-date" data-lunar>农历丙午年九月廿六</div>
           </div>
         </div>
@@ -368,7 +368,7 @@
             <p>
               各位居民，大家好！我是狸克。<br />今天是<span
                 id="broadcast-today"
-              ></span
+              >美好的相聚前夕</span
               >。
             </p>
             <p>
@@ -378,9 +378,9 @@
               </svg>
             </p>
             <p>
-              居民<span data-bind="groom"></span>与居民<span
+              居民<span data-bind="groom">刁勇辰</span>与居民<span
                 data-bind="bride"
-              ></span
+              >李汝静</span
               >决定一起展开全新的生活，要举办婚礼了呢！能看着两位在岛上收获幸福，我也很高兴，是说！
             </p>
             <p>
@@ -400,7 +400,7 @@
             </div> -->
             <p>
               <strong>今日小贴士</strong
-              ><br />服装方面不用费心准备，带上笑容来就好。点心和饮品也都安排妥当了，请大家放轻松，好好享受这场庆典呢！
+              ><br />服装方面不用费心准备，穿得舒适，带上笑容来就好。请大家放轻松，一起享受这场庆典呢！
             </p>
             <p>那么，今天的岛内广播就到这里。婚礼当天，我们不见不散，是说！</p>
           </div>
@@ -442,7 +442,7 @@
         <div class="paper info-paper reveal">
           <div class="eyebrow">这一天，为你留座</div>
           <div class="info-date" data-date="short">2026.11.04</div>
-          <div class="info-time" data-date="long">星期三 · 中午11点 开始</div>
+          <div class="info-time" data-date="long">星期三 · 中午11点28分 开始</div>
           <div class="lunar-date info-lunar" data-lunar>农历丙午年九月廿六</div>
           <hr class="dotted-rule" />
           <div class="detail-row">
@@ -475,7 +475,10 @@
                 <use href="#i-compass" /></svg
               >导航前往</a
             >
+            <button class="btn press secondary-action" id="copy-address" type="button">复制酒店与地址</button>
+            <a class="btn press secondary-action" id="calendar-link" href="assets/wedding.ics" download="婚礼赴约提醒.ics">存入日历</a>
           </div>
+          <p class="detail-small action-help" id="calendar-help">日历记录仪式开始时间；若微信无法下载，请在系统浏览器打开后保存。</p>
         </div>
         <svg class="decoration icon" aria-hidden="true">
           <use href="#i-shell" />
@@ -500,6 +503,27 @@
             loading="lazy"
             alt="海岱禧合酒店手绘位置示意图，标有后营子街808号及西苑小学"
           />
+        </div>
+        <p class="map-caption">手绘地图仅作位置示意，实际路线请以导航为准。</p>
+        <div class="paper guest-guide reveal" aria-labelledby="guest-guide-title">
+          <div class="eyebrow">登岛前的小叮咛</div>
+          <h3 id="guest-guide-title">安心赴约指南</h3>
+          <details open>
+            <summary>几点到场比较合适？</summary>
+            <p>欢迎于 <span id="arrival-time">11:00</span> 到场相聚，仪式将于<span data-bind="timeLabel">中午11点28分</span>开始。流程时间供参考，当天以现场安排为准。</p>
+          </details>
+          <details>
+            <summary>导航打不开，怎么找到酒店？</summary>
+            <p>点击上方「复制酒店与地址」，粘贴到常用地图搜索。目的地为<span data-bind="venueFull">海岱禧合婚礼艺术中心</span>，地址中的西苑小学可作地标参考。</p>
+          </details>
+          <details>
+            <summary>宴会厅、停车和住宿怎么安排？</summary>
+            <p>到店后请向酒店前台确认婚宴厅与停车位置；如需住宿、携幼同行或有饮食需求，请提前通过原有联系方式与新人沟通。</p>
+          </details>
+          <details>
+            <summary>怎样让新人收到我的祝福？</summary>
+            <p>岛上留言保存在你自己的浏览器中。想把心意送达新人，可以截图留言，通过微信发送给我们；出席情况也请直接联系新人确认。</p>
+          </details>
         </div>
         <svg class="cross-sprig" aria-hidden="true">
           <use href="#i-sprig" />
@@ -551,9 +575,9 @@
         aria-labelledby="agenda-title"
       >
         <header class="section-head reveal">
-          <div class="eyebrow">今日布吉岛任务 · 02</div>
+          <div class="eyebrow">今日布吉岛任务</div>
           <h2 id="agenda-title">一起完成幸福清单</h2>
-          <p class="subcopy">不赶时间，只管开心</p>
+          <p class="subcopy">流程时间供参考，当天以现场安排为准</p>
         </header>
         <div class="task-paper reveal">
           <div class="task-top">
@@ -577,7 +601,7 @@
         aria-labelledby="album-title"
       >
         <header class="section-head reveal">
-          <div class="eyebrow">布吉岛回忆簿 · 03</div>
+          <div class="eyebrow">布吉岛回忆簿</div>
           <h2 id="album-title">把喜欢，存成永远</h2>
           <p class="subcopy">有你在的画面，都值得珍藏</p>
         </header>
@@ -595,15 +619,15 @@
         aria-labelledby="wishes-title"
       >
         <header class="section-head reveal">
-          <div class="eyebrow">小镇幸福公告板 · 04</div>
+          <div class="eyebrow">小镇幸福公告板</div>
           <h2 id="wishes-title">留一朵小小的祝福</h2>
-          <p class="subcopy">你的心意，我们都有好好收藏</p>
+          <p class="subcopy">把心意写成便签，珍藏在这座小岛</p>
         </header>
         <div class="bulletin wood reveal">
           <div class="notes" id="notes"></div>
         </div>
         <!-- 使用自定义必填提示替代浏览器默认气泡；提交后保存到访客本机，不发送到公共留言服务。 -->
-        <form class="wish-form reveal" id="wish-form" novalidate>
+        <form class="wish-form reveal" id="wish-form" aria-describedby="wish-storage-help" novalidate>
           <h3 class="form-title">给两位岛民的留言</h3>
           <label for="guest-name"
             >你的名字 <span aria-hidden="true">*</span></label
@@ -633,7 +657,7 @@
               <use href="#i-mail" /></svg
             >把祝福贴上小岛
           </button>
-          <!-- <p class="form-help">留言收藏在当前设备，最多保存 50 条。</p> -->
+          <p class="form-help" id="wish-storage-help">留言仅保存在当前设备的浏览器中，最多 50 条，新人与其他访客无法直接看到。可截图发送给新人；清理浏览器数据会移除留言。</p>
           <p class="error" id="form-error" role="alert"></p>
         </form>
       </section>
